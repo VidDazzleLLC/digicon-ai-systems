@@ -33,30 +33,22 @@ export default function Home() {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    <div
       className="min-h-screen bg-gray-50 p-8"
     >
       <div className="max-w-4xl mx-auto">
-        <motion.h1
-          initial={{ y: -20 }}
-          animate={{ y: 0 }}
+        <h1
           className="text-4xl font-bold text-gray-900 mb-4"
         >
           Digicon AI Systems™
-        </motion.h1>
-        <motion.p
-          initial={{ y: -10 }}
-          animate={{ y: 0 }}
+        </h1>
+        <p
           className="text-2xl text-gray-600 mb-8"
         >
           ARR: <span className="font-bold text-green-600">${arr.toLocaleString()}</span> (Live)
-        </motion.p>
+        </p>
 
-        <motion.div
-          initial={{ scale: 0.95 }}
-          animate={{ scale: 1 }}
+        <div
           className="bg-white p-6 rounded-lg shadow-lg border border-gray-200"
         >
           <h2 className="text-2xl font-semibold mb-4">Free Payroll Audit (Powered by Grok AI)</h2>
@@ -69,25 +61,21 @@ export default function Home() {
           />
           {loading && <p className="text-blue-600">Analyzing with MCP + Code Execution...</p>}
           {result && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+            <p
               className="text-green-600 font-bold p-4 bg-green-50 rounded"
             >
               {result.savings} | Scanned {result.rows} rows. Ready to automate?
-            </motion.p>
+            </p>
           )}
-        </motion.div>
+        </div>
 
               {/* Joyce Voice Widget for AI Sales Pitch */}
               < style={{ marginTop: '60px', textAlign: 'center' }}>
-                        <motion.h2
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
+                        <h2
                                     className="text-3xl font-bold mb-6"
                                   >
                                     Experience Our AI-Powered Sales Assistant
-                                  </motion.h2>
+                                  </h2>
                         <iframe
                                     src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
                                     style={{
@@ -102,14 +90,14 @@ export default function Home() {
                                   />
                       </>
 
-        <motion.div
+        <div
           initial={{ y: 10 }}
           animate={{ y: 0 }}
           className="mt-8 text-sm text-gray-500"
         >
           <p>Built with Next.js + Supabase + Grok API | MCP Layer Ready for Custom Nodes</p>
-        </motion.div>
+        </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
