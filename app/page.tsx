@@ -1,10 +1,17 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import { motion } from 'framer-motion';
 
 export default function Home() {
   const [arr] = useState(20470000);
+    
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setArr(prev => prev + Math.floor(Math.random() * 1000 + 100)); // Random increment 100-1100
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<{ rows: number; savings: string } | null>(null);
   const [loading, setLoading] = useState(false);
@@ -72,6 +79,29 @@ export default function Home() {
             </motion.p>
           )}
         </motion.div>
+
+              {/* Joyce Voice Widget for AI Sales Pitch */}
+              <section.div style={{ marginTop: '60px', textAlign: 'center' }}>
+                        <motion.h2
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="text-3xl font-bold mb-6"
+                                  >
+                                    Experience Our AI-Powered Sales Assistant
+                                  </motion.h2>
+                        <iframe
+                                    src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
+                                    style={{
+                                                  width: '100%',
+                                                  height: '500px',
+                                                  borderRadius: '12px',
+                                                  border: '1px solid #ddd',
+                                                  maxWidth: '800px',
+                                                  margin: '0 auto'
+                                                              }}
+                                    title="Joyce AI Voice Sales Assistant"
+                                  />
+                      </section.div>
 
         <motion.div
           initial={{ y: 10 }}
