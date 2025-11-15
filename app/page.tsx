@@ -81,7 +81,7 @@ export default function Home() {
         </motion.div>
 
               {/* Joyce Voice Widget for AI Sales Pitch */}
-              <section.div style={{ marginTop: '60px', textAlign: 'center' }}>
+              < style={{ marginTop: '60px', textAlign: 'center' }}>
                         <motion.h2
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
@@ -101,7 +101,7 @@ export default function Home() {
                                                               }}
                                     title="Joyce AI Voice Sales Assistant"
                                   />
-                      </section.div>
+                      </>
 
         <motion.div
           initial={{ y: 10 }}
