@@ -70,7 +70,7 @@ export default function Home() {
         </div>
 
               {/* Joyce Voice Widget for AI Sales Pitch */}
-              < style={{ marginTop: '60px', textAlign: 'center' }}>
+              <div style={{ marginTop: '60px', textAlign: 'center' }}>
                         <h2
                                     className="text-3xl font-bold mb-6"
                                   >
@@ -88,11 +88,9 @@ export default function Home() {
                                                               }}
                                     title="Joyce AI Voice Sales Assistant"
                                   />
-                      </>
+                      </div>
 
         <div
-          initial={{ y: 10 }}
-          animate={{ y: 0 }}
           className="mt-8 text-sm text-gray-500"
         >
           <p>Built with Next.js + Supabase + Grok API | MCP Layer Ready for Custom Nodes</p>
