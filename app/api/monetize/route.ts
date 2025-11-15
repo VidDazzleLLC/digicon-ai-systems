@@ -1,9 +1,17 @@
 import { NextResponse } from 'next/server';
 import Together from 'together-ai';
 
-const together = new Together({ apiKey: process.env.TOGETHER_API_KEY });
-
 export async function POST(req: Request) {
+  const apiKey = process.env.TOGETHER_API_KEY;
+  
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'TOGETHER_API_KEY is not configured' },
+      { status: 500 }
+    );
+  }
+
+  const together = new Together({ apiKey });
   const { post } = await req.json();
   const completion = await together.chat.completions.create({
     model: 'meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo',
