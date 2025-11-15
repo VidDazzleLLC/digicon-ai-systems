@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { motion } from 'framer-motion';
 
 export default function Home() {
     const [arr, setArr] = useState(20470000)
