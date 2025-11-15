@@ -4,7 +4,7 @@ import Papa from 'papaparse';
 import { motion } from 'framer-motion';
 
 export default function Home() {
-  const [arr] = useState(20470000);
+    const [arr, setArr] = useState(20470000)
     
   useEffect(() => {
     const interval = setInterval(() => {
