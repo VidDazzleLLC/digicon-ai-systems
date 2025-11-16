@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
+import ChatbotWidget from './components/ChatbotWidget';
 
 interface DealRoom {
   id: string;
@@ -28,27 +29,6 @@ export default function Home() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
-
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<{ rows: number; savings: string } | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setFile(file);
-    setLoading(true);
-
-    Papa.parse(file, {
-      header: true,
-      complete: async (res) => {
-        const rows = res.data.length;
-        const savings = (rows * 12).toLocaleString();
-        setResult({ rows, savings: `$${savings}/mo in overpayments & errors` });
-        setLoading(false);
-      },
-    });
-  };
 
   const createDealRoom = () => {
     if (!newRoomName.trim()) return;
@@ -79,7 +59,7 @@ export default function Home() {
             <div className="flex space-x-4">
               <button onClick={() => setActiveSection('home')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'home' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Home</button>
               <button onClick={() => setActiveSection('dealrooms')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'dealrooms' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Deal Rooms</button>
-              <button onClick={() => setActiveSection('audit')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'audit' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Payroll Audit</button>
+              <button onClick={() => setActiveSection('audit')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'audit' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Free Audit (One Quarter)</button>
             </div>
           </div>
         </div>
@@ -99,6 +79,46 @@ export default function Home() {
                 <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
                   Transform every interaction into instant, compounding revenue with zero-friction automation
                 </p>
+
+                {/* FREE PAYROLL AUDIT CTA - Prominent on first page view */}
+                <div className="mb-12 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl">
+                  <div className="text-center">
+                    <div className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
+                      🎁 FREE SERVICE - LIMITED TIME
+                    </div>
+                    <h3 className="text-4xl font-extrabold text-white mb-4">
+                      Free Payroll Audit <span className="text-green-400">(One Quarter)</span>
+                    </h3>
+                    <p className="text-xl text-gray-200 mb-6">
+                      Analyze <span className="font-bold text-green-400">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
+                        <p className="text-3xl font-bold text-green-400">15-20%</p>
+                        <p className="text-sm text-gray-300">Average Savings Found</p>
+                      </div>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
+                        <p className="text-3xl font-bold text-green-400">$0</p>
+                        <p className="text-sm text-gray-300">Cost to You</p>
+                      </div>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
+                        <p className="text-3xl font-bold text-green-400">9 sec</p>
+                        <p className="text-sm text-gray-300">Analysis Time</p>
+                      </div>
+                    </div>
+                    <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 mb-6">
+                      <p className="text-sm text-gray-300">
+                        <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Deal Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliance, and complete confidentiality
+                      </p>
+                    </div>
+                    <button onClick={() => setActiveSection('dealrooms')} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-5 rounded-lg text-xl font-bold shadow-2xl transition-all duration-200 hover:scale-105">
+                      Get Your FREE Audit (One Quarter) →
+                    </button>
+                    <p className="text-xs text-gray-400 mt-4">
+                      No credit card required • Results in minutes • Used by Fortune 500 CFOs
+                    </p>
+                  </div>
+                </div>
 
                 {/* Audit Savings & Secure Deal Room Section */}
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -150,7 +170,7 @@ export default function Home() {
                       <span className="mr-2">🔐</span> Secure Deal Room
                     </h3>
                     <p className="text-gray-300 mb-6">
-                      Enterprise-grade security for sensitive data sharing. CFOs trust us with their most confidential information.
+                      Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Deal Rooms - never on public pages.
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-start">
@@ -191,7 +211,7 @@ export default function Home() {
                     </div>
                     <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                       <p className="text-sm text-gray-300">
-                        <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. We never see your files.
+                        <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. Your sensitive documents are stored and processed only in Deal Rooms.
                       </p>
                     </div>
                   </div>
@@ -285,22 +305,73 @@ export default function Home() {
         {activeSection === 'audit' && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-xl p-8">
-              <h2 className="text-3xl font-bold text-white mb-4">Free Payroll Audit</h2>
-              <p className="text-gray-400 mb-6">Powered by Together AI - Discover hidden savings in your payroll</p>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={handleUpload}
-                disabled={loading}
-                className="w-full mb-6 p-4 border-2 border-dashed border-blue-500/30 rounded-lg bg-slate-700/50 text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-500 file:text-white"
-              />
-              {loading && <p className="text-blue-400 mb-4">Analyzing with AI + Code Execution...</p>}
-              {result && (
-                <div className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-lg p-6">
-                  <p className="text-green-400 font-bold text-xl">{result.savings}</p>
-                  <p className="text-gray-300">Scanned {result.rows} rows. Ready to automate?</p>
-                </div>
-              )}
+              <h2 className="text-3xl font-bold text-white mb-4">Free Payroll Audit (One Quarter)</h2>
+              <p className="text-gray-400 mb-6">Powered by Together AI - Discover hidden savings in 3 months of your payroll data</p>
+              
+              {/* Information about the audit */}
+              <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-lg p-6 mb-6">
+                <h3 className="text-xl font-bold text-white mb-4">What We Analyze (One Quarter = 3 Months)</h3>
+                <ul className="space-y-2 text-gray-300">
+                  <li className="flex items-start">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span>Overpayments and duplicate payments</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span>Payroll calculation errors</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span>Tax withholding discrepancies</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span>Benefits and deduction inconsistencies</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-green-400 mr-2">✓</span>
+                    <span>Compliance risks and audit trail gaps</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Security Notice */}
+              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-6 mb-6">
+                <h3 className="text-xl font-bold text-white mb-3 flex items-center">
+                  <span className="mr-2">🔐</span> Enterprise-Grade Security
+                </h3>
+                <p className="text-gray-300 mb-4">
+                  All payroll file uploads happen exclusively in <span className="font-bold text-purple-400">secure Deal Rooms</span>. Never on this public page.
+                </p>
+                <ul className="space-y-2 text-gray-300 text-sm">
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">🔒</span>
+                    <span>Military-grade AES-256-GCM encryption</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">🔑</span>
+                    <span>Single-use access codes</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">⏰</span>
+                    <span>Auto-expiration after 90 days</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">📊</span>
+                    <span>Complete audit trail and SOC 2 Type II compliance</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* CTA to Deal Rooms */}
+              <div className="text-center">
+                <button onClick={() => setActiveSection('dealrooms')} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-lg text-lg font-bold shadow-lg transition-all duration-200 hover:scale-105">
+                  Access Secure Deal Room to Upload Files →
+                </button>
+                <p className="text-sm text-gray-400 mt-4">
+                  Your payroll data deserves enterprise-level protection
+                </p>
+              </div>
             </div>
 
             {/* Voice Widget */}
@@ -326,6 +397,9 @@ export default function Home() {
           </p>
         </div>
       </footer>
+
+      {/* AI Chatbot Widget - Persistent across all pages */}
+      <ChatbotWidget />
     </div>
   );
 }
