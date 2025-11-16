@@ -103,7 +103,7 @@ export default function ChatbotWidget() {
   return (
     <>
       {/* Chat Widget Button - Fixed at bottom right */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-6 right-6 z-[100]">
         {!isOpen && (
           <button
             onClick={() => setIsOpen(true)}

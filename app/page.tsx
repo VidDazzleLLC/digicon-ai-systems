@@ -86,9 +86,12 @@ export default function Home() {
                     <div className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
                       🎁 FREE SERVICE - LIMITED TIME
                     </div>
-                    <h3 className="text-4xl font-extrabold text-white mb-4">
+                    <h3 className="text-4xl font-extrabold text-white mb-2">
                       Free Payroll Audit <span className="text-green-400">(One Quarter)</span>
                     </h3>
+                    <p className="text-2xl font-bold text-yellow-400 mb-4">
+                      $2,500 Value - FREE for Limited Time
+                    </p>
                     <p className="text-xl text-gray-200 mb-6">
                       Analyze <span className="font-bold text-green-400">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
                     </p>
@@ -305,7 +308,8 @@ export default function Home() {
         {activeSection === 'audit' && (
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-xl p-8">
-              <h2 className="text-3xl font-bold text-white mb-4">Free Payroll Audit (One Quarter)</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">Free Payroll Audit (One Quarter)</h2>
+              <p className="text-2xl font-bold text-yellow-400 mb-4">$2,500 Value - Complimentary</p>
               <p className="text-gray-400 mb-6">Powered by Together AI - Discover hidden savings in 3 months of your payroll data</p>
               
               {/* Information about the audit */}
