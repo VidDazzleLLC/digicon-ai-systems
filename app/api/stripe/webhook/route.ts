@@ -21,7 +21,7 @@ const prisma = new PrismaClient();
 let stripe: Stripe | null = null;
 if (process.env.STRIPE_SECRET_KEY) {
   stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2025-10-29.clover',
   });
 }
 
@@ -186,12 +186,18 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 /**
  * Handle customer.subscription.created
  */
-async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
+async function handleSubscriptionCreated(subscription: any) {
   console.log('📋 SUBSCRIPTION CREATED');
   console.log(`- Subscription ID: ${subscription.id}`);
   console.log(`- Customer: ${subscription.customer}`);
 
   const customerId = subscription.customer as string;
+  const currentPeriodStart = subscription.current_period_start 
+    ? new Date(subscription.current_period_start * 1000) 
+    : new Date();
+  const currentPeriodEnd = subscription.current_period_end 
+    ? new Date(subscription.current_period_end * 1000) 
+    : new Date();
 
   // Update or create stripe customer record
   await prisma.stripeCustomer.upsert({
@@ -199,8 +205,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     update: {
       stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status.toUpperCase() as any,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart,
+      currentPeriodEnd,
     },
     create: {
       stripeCustomerId: customerId,
@@ -208,8 +214,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
       email: 'unknown@email.com', // Will be updated from checkout
       companyName: 'Unknown',
       subscriptionStatus: subscription.status.toUpperCase() as any,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      currentPeriodStart,
+      currentPeriodEnd,
     },
   });
 
@@ -219,21 +225,30 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 /**
  * Handle customer.subscription.updated
  */
-async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+async function handleSubscriptionUpdated(subscription: any) {
   console.log('🔄 SUBSCRIPTION UPDATED');
   console.log(`- Subscription ID: ${subscription.id}`);
   console.log(`- Status: ${subscription.status}`);
 
   const customerId = subscription.customer as string;
+  const currentPeriodStart = subscription.current_period_start 
+    ? new Date(subscription.current_period_start * 1000) 
+    : new Date();
+  const currentPeriodEnd = subscription.current_period_end 
+    ? new Date(subscription.current_period_end * 1000) 
+    : new Date();
+  const cancelAt = subscription.cancel_at 
+    ? new Date(subscription.cancel_at * 1000) 
+    : null;
 
   // Update stripe customer record
   await prisma.stripeCustomer.updateMany({
     where: { stripeCustomerId: customerId },
     data: {
       subscriptionStatus: subscription.status.toUpperCase() as any,
-      currentPeriodStart: new Date(subscription.current_period_start * 1000),
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
+      currentPeriodStart,
+      currentPeriodEnd,
+      cancelAt,
     },
   });
 
@@ -260,7 +275,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 /**
  * Handle customer.subscription.deleted
  */
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+async function handleSubscriptionDeleted(subscription: any) {
   console.log('❌ SUBSCRIPTION DELETED');
   console.log(`- Subscription ID: ${subscription.id}`);
 
