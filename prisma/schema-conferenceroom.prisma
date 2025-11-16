@@ -1,22 +1,22 @@
-// Secure Deal Room Database Schema
+// Secure Conference Room Database Schema
 // Enterprise-grade security for sensitive customer data
 //
 // Security Features:
 // - Single-use access codes (TOTP-based, 8-character alphanumeric)
-// - Automatic expiration after deal closure
+// - Automatic expiration after room closure
 // - AES-256 encryption for all uploaded files
 // - Access logging and audit trails
 // - IP whitelist support (optional)
 // - Multi-factor authentication support
 //
 // Workflow:
-// 1. Customer expresses interest → Deal room created
+// 1. Customer expresses interest → Conference room created
 // 2. Unique access code generated → Sent to CFO via email
 // 3. CFO uses code → Uploads sensitive docs (payroll, finance, compliance)
 // 4. Files encrypted at rest → Only Digicon can decrypt
-// 5. Audit completes → Deal closes → Room expires
+// 5. Audit completes → Room closes → Room expires
 
-model DealRoom {
+model ConferenceRoom {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -40,7 +40,7 @@ model DealRoom {
   accessCount     Int       @default(0)
   
   // Expiration & Status
-  status          DealRoomStatus @default(ACTIVE)
+  status          ConferenceRoomStatus @default(ACTIVE)
   expiresAt       DateTime  // Auto-set to 90 days from creation
   closedAt        DateTime?
   closureReason   String?   // "DEAL_WON", "DEAL_LOST", "EXPIRED", "REVOKED"
@@ -55,7 +55,7 @@ model DealRoom {
   auditLog        AuditLog[]
   
   // Uploaded Files
-  files           DealRoomFile[]
+  files           ConferenceRoomFile[]
   
   // Deal Metadata
   dealValue       Float?    // Estimated upfront fee
@@ -69,7 +69,7 @@ model DealRoom {
   @@index([expiresAt])
 }
 
-enum DealRoomStatus {
+enum ConferenceRoomStatus {
   ACTIVE       // Room is open and accessible
   EXPIRED      // Automatic expiration (90 days)
   CLOSED_WON   // Deal closed successfully
@@ -78,7 +78,7 @@ enum DealRoomStatus {
   SUSPENDED    // Temporarily suspended (security concerns)
 }
 
-model DealRoomFile {
+model ConferenceRoomFile {
   id            String   @id @default(cuid())
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -109,10 +109,10 @@ model DealRoomFile {
   auditIncluded Boolean  @default(false)  // Included in audit analysis
   
   // Relationship
-  dealRoom      DealRoom @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
-  dealRoomId    String
+  conferenceRoom      ConferenceRoom @relation(fields: [conferenceRoomId], references: [id], onDelete: Cascade)
+  conferenceRoomId    String
   
-  @@index([dealRoomId])
+  @@index([conferenceRoomId])
   @@index([fileCategory])
   @@index([processed])
 }
@@ -146,10 +146,10 @@ model AuditLog {
   errorMsg    String?
   
   // Relationship
-  dealRoom    DealRoom @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
-  dealRoomId  String
+  conferenceRoom    ConferenceRoom @relation(fields: [conferenceRoomId], references: [id], onDelete: Cascade)
+  conferenceRoomId  String
   
-  @@index([dealRoomId])
+  @@index([conferenceRoomId])
   @@index([eventType])
   @@index([createdAt])
 }

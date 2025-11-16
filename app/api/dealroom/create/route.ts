@@ -3,21 +3,21 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
 /**
- * Secure Deal Room Provisioning API
+ * Secure Conference Room Provisioning API
  * 
- * Creates an enterprise-grade secure deal room when a customer expresses interest.
+ * Creates an enterprise-grade secure conference room when a customer expresses interest.
  * Generates single-use access codes and sends them to the CFO.
  * 
  * Security Philosophy:
  * - "Show me you can save money, but I won't give you my data until I trust you"
- * - Deal rooms are ISOLATED, ENCRYPTED, and TIME-LIMITED
+ * - Conference rooms are ISOLATED, ENCRYPTED, and TIME-LIMITED
  * - Access codes are SINGLE-USE and expire after 90 days
  * - All file uploads are encrypted with AES-256
  * - Complete audit trail of all access attempts
  * 
  * Workflow:
  * 1. Sales/Marketing: Customer clicks "Get Free Audit" or "Schedule Demo"
- * 2. This API: Creates secure deal room + generates access code
+ * 2. This API: Creates secure conference room + generates access code
  * 3. Email Service: Sends access code to CFO with security assurances
  * 4. CFO: Enters code → Gains access to upload portal
  * 5. CFO: Uploads sensitive docs (payroll, finance, compliance)
@@ -25,7 +25,7 @@ import bcrypt from 'bcryptjs';
  * 7. Deal closes → Room expires → All data destroyed (optional retention)
  */
 
-interface CreateDealRoomRequest {
+interface CreateConferenceRoomRequest {
   // Company Information
   companyName: string;
   companyEmail: string;
@@ -61,7 +61,7 @@ function generateAccessCode(): string {
   return code;
 }
 
-// Generate AES-256 encryption key for this deal room
+// Generate AES-256 encryption key for this conference room
 function generateEncryptionKey(): string {
   return crypto.randomBytes(32).toString('hex');  // 256-bit key
 }
@@ -81,7 +81,7 @@ Dear ${cfoName},
 
 Thank you for your interest in Digicon AI Systems' free audit service.
 
-We've created a secure deal room for ${companyName} to upload sensitive documents for analysis.
+We've created a secure conference room for ${companyName} to upload sensitive documents for analysis.
 
 🔒 YOUR SECURE ACCESS CODE: ${accessCode}
 
@@ -91,7 +91,7 @@ We've created a secure deal room for ${companyName} to upload sensitive document
 - Data is stored in SOC 2 Type II compliant infrastructure
 - Only authorized Digicon analysts can decrypt your data
 - Complete audit trail of all access attempts
-- Room automatically expires after deal closure
+- Room automatically expires after closure
 
 📊 What to Upload:
 - Payroll exports (ADP, Gusto, Workday)
@@ -103,8 +103,8 @@ We've created a secure deal room for ${companyName} to upload sensitive document
 
 ⏱ Turnaround Time: 90 minutes after upload
 
-Access your secure deal room here:
-https://digicon-ai-systems.vercel.app/dealroom/${accessCode}
+Access your secure conference room here:
+https://digicon-ai-systems.vercel.app/conferenceroom/${accessCode}
 
 Questions? Reply to this email or call us at (555) 123-4567.
 
@@ -116,7 +116,7 @@ P.S. We take your data security seriously. Our system is designed with enterpris
 
   console.log('\n=== ACCESS CODE EMAIL ===' );
   console.log(`To: ${cfoEmail}`);
-  console.log(`Subject: Your Secure Deal Room Access Code`);
+  console.log(`Subject: Your Secure Conference Room Access Code`);
   console.log(emailBody);
   console.log('\n=========================\n');
   
@@ -126,7 +126,7 @@ P.S. We take your data security seriously. Our system is designed with enterpris
 
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateDealRoomRequest = await request.json();
+    const body: CreateConferenceRoomRequest = await request.json();
     
     const {
       companyName,
@@ -170,8 +170,8 @@ export async function POST(request: NextRequest) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 90);
 
-    // Create deal room record (pseudo-code - would use Prisma in production)
-    const dealRoom = {
+    // Create conference room record (pseudo-code - would use Prisma in production)
+    const conferenceRoom = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
       
@@ -208,15 +208,15 @@ export async function POST(request: NextRequest) {
     };
 
     // TODO: Save to database
-    // await prisma.dealRoom.create({ data: dealRoom });
+    // await prisma.conferenceRoom.create({ data: conferenceRoom });
     
     // Log audit event
-    console.log('\n🎯 DEAL ROOM CREATED:');
+    console.log('\n🎯 CONFERENCE ROOM CREATED:');
     console.log(`- Company: ${companyName}`);
     console.log(`- CFO: ${cfoName} (${cfoEmail})`);
     console.log(`- Access Code: ${accessCode}`);
     console.log(`- Expires: ${expiresAt.toLocaleDateString()}`);
-    console.log(`- Room ID: ${dealRoom.id}`);
+    console.log(`- Room ID: ${conferenceRoom.id}`);
     
     // Send access code to CFO
     await sendAccessCodeEmail(
@@ -230,22 +230,22 @@ export async function POST(request: NextRequest) {
     // Return success response (DO NOT include access code in API response)
     return NextResponse.json({
       success: true,
-      dealRoom: {
-        id: dealRoom.id,
-        companyName: dealRoom.companyName,
-        cfoEmail: dealRoom.cfoEmail,
-        status: dealRoom.status,
-        expiresAt: dealRoom.expiresAt,
+      conferenceRoom: {
+        id: conferenceRoom.id,
+        companyName: conferenceRoom.companyName,
+        cfoEmail: conferenceRoom.cfoEmail,
+        status: conferenceRoom.status,
+        expiresAt: conferenceRoom.expiresAt,
         accessCodeSent: true,
-        message: `Secure deal room created. Access code sent to ${cfoEmail}`
+        message: `Secure conference room created. Access code sent to ${cfoEmail}`
       }
     });
 
   } catch (error) {
-    console.error('Deal room creation error:', error);
+    console.error('Conference room creation error:', error);
     return NextResponse.json(
       { 
-        error: 'Failed to create deal room',
+        error: 'Failed to create conference room',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
