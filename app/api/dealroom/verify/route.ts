@@ -1,7 +1,7 @@
 /**
- * Deal Room Access Verification API
+ * Conference Room Access Verification API
  * 
- * This API endpoint verifies access codes and grants access to deal rooms.
+ * This API endpoint verifies access codes and grants access to conference rooms.
  * Features:
  * - Validates access code against hashed version (bcrypt)
  * - Enforces single-use access codes
@@ -25,7 +25,7 @@ import bcrypt from 'bcryptjs';
 import { promoteToSalesPipeline } from '@/lib/integrations/aitable';
 
 interface VerifyAccessRequest {
-  dealRoomId: string;
+  conferenceRoomId: string;
   accessCode: string;
 }
 
@@ -48,7 +48,7 @@ function getClientIP(request: NextRequest): string {
 }
 
 /**
- * Check if deal room has expired
+ * Check if conference room has expired
  */
 function hasExpired(createdAt: Date, expiresAt: Date): boolean {
   const now = new Date();
@@ -57,16 +57,16 @@ function hasExpired(createdAt: Date, expiresAt: Date): boolean {
 
 /**
  * Verify access code endpoint
- * POST /api/dealroom/verify
+ * POST /api/conferenceroom/verify
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json() as VerifyAccessRequest;
-    const { dealRoomId, accessCode } = body;
+    const { conferenceRoomId, accessCode } = body;
     
-    if (!dealRoomId || !accessCode) {
+    if (!conferenceRoomId || !accessCode) {
       return NextResponse.json(
-        { error: 'Missing required fields: dealRoomId, accessCode' },
+        { error: 'Missing required fields: conferenceRoomId, accessCode' },
         { status: 400 }
       );
     }
@@ -74,14 +74,14 @@ export async function POST(request: NextRequest) {
     const clientIP = getClientIP(request);
     
     console.log('🔑 ACCESS ATTEMPT:', {
-      dealRoomId,
+      conferenceRoomId,
       ip: clientIP,
       timestamp: new Date().toISOString()
     });
     
-    // TODO: Fetch deal room from database
-    // const dealRoom = await prisma.dealRoom.findUnique({
-    //   where: { id: dealRoomId },
+    // TODO: Fetch conference room from database
+    // const conferenceRoom = await prisma.conferenceRoom.findUnique({
+    //   where: { id: conferenceRoomId },
     //   include: {
     //     files: true,
     //     auditLogs: {
@@ -92,9 +92,9 @@ export async function POST(request: NextRequest) {
     //   }
     // });
     
-    // Mock deal room data for development
-    const mockDealRoom = {
-      id: dealRoomId,
+    // Mock conference room data for development
+    const mockConferenceRoom = {
+      id: conferenceRoomId,
       companyName: 'Acme Corp',
       accessCodeHash: '$2a$10$MOCKHASHMOCKHASHMOCKHASHMOCKHASHMOCKHASHMO', // Mock bcrypt hash
       codeUsed: false,
@@ -107,46 +107,46 @@ export async function POST(request: NextRequest) {
     };
     
     // Check if room exists
-    if (!mockDealRoom) {
-      console.error('❌ INVALID ROOM: Deal room not found');
+    if (!mockConferenceRoom) {
+      console.error('❌ INVALID ROOM: Conference room not found');
       // Log failed attempt
       // await prisma.auditLog.create({
       //   data: {
-      //     dealRoomId,
+      //     conferenceRoomId,
       //     eventType: 'ACCESS_ATTEMPT_FAILED',
       //     ipAddress: clientIP,
-      //     metadata: { reason: 'Invalid deal room ID' }
+      //     metadata: { reason: 'Invalid conference room ID' }
       //   }
       // });
       return NextResponse.json(
-        { error: 'Invalid deal room or access code' },
+        { error: 'Invalid conference room or access code' },
         { status: 401 }
       );
     }
     
     // Check if room has expired
-    if (hasExpired(mockDealRoom.createdAt, mockDealRoom.expiresAt)) {
-      console.error('⌛ EXPIRED ROOM: Deal room has expired');
+    if (hasExpired(mockConferenceRoom.createdAt, mockConferenceRoom.expiresAt)) {
+      console.error('⌛ EXPIRED ROOM: Conference room has expired');
       // await prisma.auditLog.create({
       //   data: {
-      //     dealRoomId,
+      //     conferenceRoomId,
       //     eventType: 'ACCESS_ATTEMPT_FAILED',
       //     ipAddress: clientIP,
-      //     metadata: { reason: 'Deal room expired' }
+      //     metadata: { reason: 'Conference room expired' }
       //   }
       // });
       return NextResponse.json(
-        { error: 'This deal room has expired. Please contact support.' },
+        { error: 'This conference room has expired. Please contact support.' },
         { status: 403 }
       );
     }
     
     // Check if code has already been used (single-use enforcement)
-    if (mockDealRoom.codeUsed) {
+    if (mockConferenceRoom.codeUsed) {
       console.error('⛔ CODE ALREADY USED: Single-use code already redeemed');
       // await prisma.auditLog.create({
       //   data: {
-      //     dealRoomId,
+      //     conferenceRoomId,
       //     eventType: 'ACCESS_ATTEMPT_FAILED',
       //     ipAddress: clientIP,
       //     metadata: { reason: 'Access code already used', suspicious: true }
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Verify access code (compare with hashed version)
-    // const isValidCode = await bcrypt.compare(accessCode, mockDealRoom.accessCodeHash);
+    // const isValidCode = await bcrypt.compare(accessCode, mockConferenceRoom.accessCodeHash);
     
     // For development, simulate code verification
     const isValidCode = accessCode.length === 8; // Mock validation
@@ -168,21 +168,21 @@ export async function POST(request: NextRequest) {
       console.error('❌ INVALID CODE: Access code does not match');
       // await prisma.auditLog.create({
       //   data: {
-      //     dealRoomId,
+      //     conferenceRoomId,
       //     eventType: 'ACCESS_ATTEMPT_FAILED',
       //     ipAddress: clientIP,
       //     metadata: { reason: 'Invalid access code' }
       //   }
       // });
       return NextResponse.json(
-        { error: 'Invalid deal room or access code' },
+        { error: 'Invalid conference room or access code' },
         { status: 401 }
       );
     }
     
     // ACCESS GRANTED - Mark code as used
-    // await prisma.dealRoom.update({
-    //   where: { id: dealRoomId },
+    // await prisma.conferenceRoom.update({
+    //   where: { id: conferenceRoomId },
     //   data: {
     //     codeUsed: true,
     //     codeUsedAt: new Date(),
@@ -195,7 +195,7 @@ export async function POST(request: NextRequest) {
     // Log successful access
     // await prisma.auditLog.create({
     //   data: {
-    //     dealRoomId,
+    //     conferenceRoomId,
     //     eventType: 'ACCESS_ATTEMPT_SUCCESS',
     //     ipAddress: clientIP,
     //     metadata: { firstAccess: true }
@@ -203,20 +203,20 @@ export async function POST(request: NextRequest) {
     // });
     
     // Promote lead to sales pipeline in AITable (async, don't block response)
-    promoteToSalesPipeline(dealRoomId).catch(error => {
+    promoteToSalesPipeline(conferenceRoomId).catch(error => {
       console.error('Failed to promote lead to sales pipeline:', error);
     });
     
-    // Return success with deal room details (NO access code or encryption keys)
+    // Return success with conference room details (NO access code or encryption keys)
     return NextResponse.json({
       success: true,
-      dealRoom: {
-        id: mockDealRoom.id,
-        companyName: mockDealRoom.companyName,
-        status: mockDealRoom.status,
-        expiresAt: mockDealRoom.expiresAt.toISOString(),
-        message: 'Access granted. Welcome to your secure deal room.',
-        cfoName: `${mockDealRoom.cfoFirst} ${mockDealRoom.cfoLast}`
+      conferenceRoom: {
+        id: mockConferenceRoom.id,
+        companyName: mockConferenceRoom.companyName,
+        status: mockConferenceRoom.status,
+        expiresAt: mockConferenceRoom.expiresAt.toISOString(),
+        message: 'Access granted. Welcome to your secure conference room.',
+        cfoName: `${mockConferenceRoom.cfoFirst} ${mockConferenceRoom.cfoLast}`
       }
     });
     

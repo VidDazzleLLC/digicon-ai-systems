@@ -13,7 +13,7 @@ export default function ChatbotWidget() {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      text: "Hi! I'm your AI assistant. I can help you learn about Digicon's services, our Free Payroll Audit (One Quarter), and schedule Deal Room access. How can I help you today?",
+      text: "Hi! I'm your AI assistant. I can help you learn about Digicon's services, our Free Payroll Audit (One Quarter), and schedule Secure Conference Room access. How can I help you today?",
       sender: 'bot',
       timestamp: new Date()
     }
@@ -61,36 +61,36 @@ export default function ChatbotWidget() {
   const generateBotResponse = (input: string): string => {
     // Check for contact/lead capture intent
     if (input.includes('contact') || input.includes('email') || input.includes('phone') || input.includes('reach')) {
-      return "I'd love to help you get in touch! Please provide your name, email, and company, and our team will reach out within 24 hours. You can also schedule direct access to a Deal Room where you can securely share information and work directly with our team.";
+      return "I'd love to help you get in touch! Please provide your name, email, and company, and our team will reach out within 24 hours. You can also schedule direct access to a Secure Conference Room where you can securely share information and work directly with our team.";
     }
 
-    // Check for Deal Room scheduling
-    if (input.includes('schedule') || input.includes('deal room') || input.includes('appointment') || input.includes('meeting')) {
-      return "Great! To schedule Deal Room access, I'll need your email address and preferred time. Deal Rooms provide enterprise-grade security for all your sensitive data and documents. Would you like to proceed?";
+    // Check for Conference Room scheduling
+    if (input.includes('schedule') || input.includes('conference') || input.includes('room') || input.includes('appointment') || input.includes('meeting')) {
+      return "Great! To schedule Secure Conference Room access, I'll need your email address and preferred time. Conference Rooms provide enterprise-grade security for all your sensitive data and documents. Would you like to proceed?";
     }
 
     // Check for payroll audit questions
     if (input.includes('payroll') || input.includes('audit') || input.includes('savings') || input.includes('quarter')) {
-      return "Our Free Payroll Audit (One Quarter) analyzes 3 months of your payroll data to uncover hidden savings, overpayments, and errors. We typically find 15-20% in cost reductions. This service is completely FREE and helps you understand where you can save. All file uploads happen securely in Deal Rooms with military-grade encryption. Would you like to schedule a Deal Room to get started?";
+      return "Our Free Payroll Audit (One Quarter) analyzes 3 months of your payroll data to uncover hidden savings, overpayments, and errors. We typically find 15-20% in cost reductions. This service is completely FREE and helps you understand where you can save. All file uploads happen securely in Secure Conference Rooms with military-grade encryption. Would you like to schedule a Conference Room to get started?";
     }
 
     // Check for Voice AI Bot questions
     if (input.includes('voice') || input.includes('ai bot') || input.includes('assistant')) {
-      return "If you like this AI bot experience, we also offer Voice AI Bots for your business! Our Voice AI solutions can handle customer inquiries, sales calls, and support 24/7. Schedule an appointment in a Deal Room for more information about our Voice AI solutions and see a live demo.";
+      return "If you like this AI bot experience, we also offer Voice AI Bots for your business! Our Voice AI solutions can handle customer inquiries, sales calls, and support 24/7. Schedule an appointment in a Secure Conference Room for more information about our Voice AI solutions and see a live demo.";
     }
 
     // Check for security questions
     if (input.includes('security') || input.includes('secure') || input.includes('safe') || input.includes('confidential')) {
-      return "Security is our top priority! All sensitive data uploads happen exclusively in Deal Rooms, which feature: military-grade AES-256-GCM encryption, single-use access codes, auto-expiration after 90 days, complete audit trails, and SOC 2 Type II compliance. Your data is never accessible to unauthorized parties.";
+      return "Security is our top priority! All sensitive data uploads happen exclusively in Secure Conference Rooms, which feature: military-grade AES-256-GCM encryption, single-use access codes, auto-expiration after 90 days, complete audit trails, and SOC 2 Type II compliance. Your data is never accessible to unauthorized parties.";
     }
 
     // Check for services questions
     if (input.includes('service') || input.includes('what do') || input.includes('help') || input.includes('offer')) {
-      return "Digicon AI Systems provides enterprise-grade AI solutions including: 1) Free Payroll Audit (One Quarter) - analyzing 3 months of data to find savings, 2) Deal Rooms - secure collaboration spaces, 3) Voice AI Bots - automated voice assistants for your business, 4) Enterprise system audits across 6 core areas (Payroll, HRIS, ERP, CRM, Compliance, AI Infrastructure). What would you like to know more about?";
+      return "Digicon AI Systems provides enterprise-grade AI solutions including: 1) Free Payroll Audit (One Quarter) - analyzing 3 months of data to find savings, 2) Secure Conference Rooms - secure collaboration spaces, 3) Voice AI Bots - automated voice assistants for your business, 4) Enterprise system audits across 6 core areas (Payroll, HRIS, ERP, CRM, Compliance, AI Infrastructure). What would you like to know more about?";
     }
 
     // Default response
-    return "Thanks for your question! I can help you with: \n• Free Payroll Audit (One Quarter) information\n• Deal Room scheduling and security\n• Voice AI Bot services\n• General questions about Digicon's offerings\n\nWhat would you like to know more about?";
+    return "Thanks for your question! I can help you with: \n• Free Payroll Audit (One Quarter) information\n• Secure Conference Room scheduling and security\n• Voice AI Bot services\n• General questions about Digicon's offerings\n\nWhat would you like to know more about?";
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

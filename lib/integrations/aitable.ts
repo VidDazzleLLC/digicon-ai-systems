@@ -1,7 +1,7 @@
 /**
  * AITable.ai CRM Integration
  * 
- * Automatically syncs Digicon deal rooms with AITable.ai CRM.
+ * Automatically syncs Digicon conference rooms with AITable.ai CRM.
  * Handles lead creation, pipeline tracking, and email outreach automation.
  * 
  * AITable Setup:
@@ -11,7 +11,7 @@
  * - Automation: Email outreach via AITable workflows
  * 
  * Integration Flow:
- * 1. Deal room created → Lead added to "Leads" table
+ * 1. Conference room created → Lead added to "Leads" table
  * 2. Access code sent → Status updated to "Code Sent"
  * 3. CFO accesses room → Lead moved to "Sales Pipeline"
  * 4. Files uploaded → Status updated to "Documents Received"
@@ -38,7 +38,7 @@ interface LeadData {
   annualBudget?: number;
   leadSource?: string;
   salesRep?: string;
-  dealRoomId: string;
+  conferenceRoomId: string;
   accessCode: string;  // Store for reference (already sent to CFO)
   status: 'New' | 'Code Sent' | 'Accessed' | 'Documents Uploaded' | 'Audit Running' | 'Proposal Sent' | 'Negotiation' | 'Won' | 'Lost';
   estimatedValue?: number;
@@ -46,7 +46,7 @@ interface LeadData {
 }
 
 /**
- * Create a new lead in AITable when deal room is created
+ * Create a new lead in AITable when conference room is created
  */
 export async function createLeadInAITable(leadData: LeadData): Promise<void> {
   try {
@@ -63,7 +63,7 @@ export async function createLeadInAITable(leadData: LeadData): Promise<void> {
             'Annual Budget': leadData.annualBudget || 0,
             'Lead Source': leadData.leadSource || 'Website',
             'Sales Rep': leadData.salesRep || 'Unassigned',
-            'Deal Room ID': leadData.dealRoomId,
+            'Conference Room ID': leadData.conferenceRoomId,
             'Access Code': leadData.accessCode,
             'Status': 'Code Sent',  // Initial status
             'Estimated Value': leadData.estimatedValue || 0,
@@ -87,13 +87,13 @@ export async function createLeadInAITable(leadData: LeadData): Promise<void> {
     console.log('\n📊 AITABLE LEAD CREATED:');
     console.log(`- Company: ${leadData.companyName}`);
     console.log(`- CFO: ${leadData.cfoEmail}`);
-    console.log(`- Deal Room ID: ${leadData.dealRoomId}`);
+    console.log(`- Conference Room ID: ${leadData.conferenceRoomId}`);
     console.log(`- Status: Code Sent`);
     console.log(`- Lead Source: ${leadData.leadSource}`);
 
   } catch (error) {
     console.error('Failed to create lead in AITable:', error);
-    // Don't throw - CRM sync failure shouldn't block deal room creation
+    // Don't throw - CRM sync failure shouldn't block conference room creation
   }
 }
 
@@ -101,7 +101,7 @@ export async function createLeadInAITable(leadData: LeadData): Promise<void> {
  * Update lead status when events occur
  */
 export async function updateLeadStatus(
-  dealRoomId: string,
+  conferenceRoomId: string,
   status: LeadData['status'],
   additionalData?: Partial<LeadData>
 ): Promise<void> {
@@ -114,8 +114,8 @@ export async function updateLeadStatus(
       }
     };
 
-    // In production, find record by dealRoomId and update
-    // const recordId = await findRecordByDealRoomId(dealRoomId);
+    // In production, find record by conferenceRoomId and update
+    // const recordId = await findRecordByConferenceRoomId(conferenceRoomId);
     // await fetch(`${AITABLE_API_URL}/spaces/${AITABLE_SPACE_ID}/datasheets/${LEADS_TABLE_ID}/records/${recordId}`, {
     //   method: 'PATCH',
     //   headers: {
@@ -125,7 +125,7 @@ export async function updateLeadStatus(
     //   body: JSON.stringify(updatePayload)
     // });
 
-    console.log(`\n✅ LEAD STATUS UPDATED: ${dealRoomId} → ${status}`);
+    console.log(`\n✅ LEAD STATUS UPDATED: ${conferenceRoomId} → ${status}`);
 
   } catch (error) {
     console.error('Failed to update lead status:', error);
@@ -182,16 +182,16 @@ export async function triggerAITableEmail(
 }
 
 /**
- * Move lead from "Leads" to "Sales Pipeline" when they access the deal room
+ * Move lead from "Leads" to "Sales Pipeline" when they access the conference room
  */
-export async function promoteToSalesPipeline(dealRoomId: string): Promise<void> {
+export async function promoteToSalesPipeline(conferenceRoomId: string): Promise<void> {
   try {
     // In production:
     // 1. Find lead record in "Leads" table
     // 2. Copy data to "Sales Pipeline" table
     // 3. Update original lead status to "Promoted"
 
-    console.log(`\n🚀 LEAD PROMOTED TO SALES PIPELINE: ${dealRoomId}`);
+    console.log(`\n🚀 LEAD PROMOTED TO SALES PIPELINE: ${conferenceRoomId}`);
 
   } catch (error) {
     console.error('Failed to promote lead to sales pipeline:', error);
@@ -206,7 +206,7 @@ export async function promoteToSalesPipeline(dealRoomId: string): Promise<void> 
  * - Day 3: No documents uploaded → Follow-up call scheduled
  * - Day 7: No response → Mark as cold lead
  */
-export async function scheduleFollowUpSequence(dealRoomId: string, cfoEmail: string): Promise<void> {
+export async function scheduleFollowUpSequence(conferenceRoomId: string, cfoEmail: string): Promise<void> {
   try {
     // AITable can schedule automated follow-up emails
     // Set up workflow rules in AITable UI
@@ -218,7 +218,7 @@ export async function scheduleFollowUpSequence(dealRoomId: string, cfoEmail: str
     ];
 
     console.log(`\n📅 FOLLOW-UP SEQUENCE SCHEDULED:`);
-    console.log(`- Deal Room: ${dealRoomId}`);
+    console.log(`- Conference Room: ${conferenceRoomId}`);
     console.log(`- Email: ${cfoEmail}`);
     console.log(`- Schedule:`, followUpSchedule);
 

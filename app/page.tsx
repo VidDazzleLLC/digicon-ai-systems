@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Papa from 'papaparse';
 import ChatbotWidget from './components/ChatbotWidget';
 
-interface DealRoom {
+interface ConferenceRoom {
   id: string;
   name: string;
   description: string;
@@ -14,10 +14,10 @@ interface DealRoom {
 export default function Home() {
   const [arr, setArr] = useState(20470000);
   const [activeSection, setActiveSection] = useState('home');
-  const [dealRooms, setDealRooms] = useState<DealRoom[]>([
-    { id: '1', name: 'Enterprise Deal - Acme Corp', description: 'SaaS integration project', participants: 5, status: 'active' },
-    { id: '2', name: 'Strategic Partnership - TechVentures', description: 'Revenue sharing agreement', participants: 3, status: 'active' },
-    { id: '3', name: 'Product Launch - Beta Testing', description: 'Early access program', participants: 12, status: 'pending' }
+  const [conferenceRooms, setConferenceRooms] = useState<ConferenceRoom[]>([
+    { id: '1', name: 'Acme Corp - Secure Conference Room', description: 'SaaS integration project', participants: 5, status: 'active' },
+    { id: '2', name: 'TechVentures - Secure Conference Room', description: 'Revenue sharing agreement', participants: 3, status: 'active' },
+    { id: '3', name: 'Beta Testing - Secure Conference Room', description: 'Early access program', participants: 12, status: 'pending' }
   ]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
@@ -30,16 +30,16 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const createDealRoom = () => {
+  const createConferenceRoom = () => {
     if (!newRoomName.trim()) return;
-    const newRoom: DealRoom = {
+    const newRoom: ConferenceRoom = {
       id: Date.now().toString(),
       name: newRoomName,
       description: newRoomDesc,
       participants: 1,
       status: 'active'
     };
-    setDealRooms([...dealRooms, newRoom]);
+    setConferenceRooms([...conferenceRooms, newRoom]);
     setNewRoomName('');
     setNewRoomDesc('');
     setShowCreateModal(false);
@@ -58,8 +58,7 @@ export default function Home() {
             </div>
             <div className="flex space-x-4">
               <button onClick={() => setActiveSection('home')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'home' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Home</button>
-              <button onClick={() => setActiveSection('dealrooms')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'dealrooms' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Deal Rooms</button>
-              <button onClick={() => setActiveSection('audit')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'audit' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Free Audit (One Quarter)</button>
+              <button onClick={() => setActiveSection('conferencerooms')} className={`px-4 py-2 rounded-lg transition ${activeSection === 'conferencerooms' ? 'bg-blue-500 text-white' : 'text-gray-300 hover:bg-slate-800'}`}>Conference Rooms</button>
             </div>
           </div>
         </div>
@@ -111,10 +110,10 @@ export default function Home() {
                     </div>
                     <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 mb-6">
                       <p className="text-sm text-gray-300">
-                        <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Deal Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliance, and complete confidentiality
+                        <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliance, and complete confidentiality
                       </p>
                     </div>
-                    <button onClick={() => setActiveSection('dealrooms')} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-5 rounded-lg text-xl font-bold shadow-2xl transition-all duration-200 hover:scale-105">
+                    <button onClick={() => setActiveSection('conferencerooms')} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-5 rounded-lg text-xl font-bold shadow-2xl transition-all duration-200 hover:scale-105">
                       Get Your FREE Audit (One Quarter) →
                     </button>
                     <p className="text-xs text-gray-400 mt-4">
@@ -123,7 +122,65 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Audit Savings & Secure Deal Room Section */}
+                {/* What We Analyze & Enterprise-Grade Security */}
+                <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                  {/* What We Analyze Box */}
+                  <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-2xl p-6">
+                    <h3 className="text-2xl font-bold text-white mb-4">What We Analyze (One Quarter = 3 Months)</h3>
+                    <ul className="space-y-3 text-gray-300">
+                      <li className="flex items-start">
+                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span>Overpayments and duplicate payments</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span>Payroll calculation errors</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span>Tax withholding discrepancies</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span>Benefits and deduction inconsistencies</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span>Compliance risks and audit trail gaps</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  {/* Enterprise-Grade Security Box */}
+                  <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6">
+                    <h3 className="text-2xl font-bold text-white mb-3 flex items-center">
+                      <span className="mr-2">🔐</span> Enterprise-Grade Security
+                    </h3>
+                    <p className="text-gray-300 mb-4">
+                      All payroll file uploads happen exclusively in <span className="font-bold text-purple-400">Secure Conference Rooms</span>. Never on this public page.
+                    </p>
+                    <ul className="space-y-3 text-gray-300">
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">🔒</span>
+                        <span>Military-grade AES-256-GCM encryption</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">🔑</span>
+                        <span>Single-use access codes</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">⏰</span>
+                        <span>Auto-expiration after 90 days</span>
+                      </li>
+                      <li className="flex items-start">
+                        <span className="text-purple-400 mr-2">📊</span>
+                        <span>Complete audit trail and SOC 2 Type II compliance</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Enterprise Audits & Secure Conference Rooms Section */}
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
                   {/* Audit Savings */}
                   <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/20">
@@ -167,13 +224,13 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Secure Deal Room */}
+                  {/* Secure Conference Room */}
                   <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/30">
                     <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
-                      <span className="mr-2">🔐</span> Secure Deal Room
+                      <span className="mr-2">🔐</span> Secure Conference Rooms
                     </h3>
                     <p className="text-gray-300 mb-6">
-                      Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Deal Rooms - never on public pages.
+                      Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Secure Conference Rooms - never on public pages.
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-start">
@@ -214,8 +271,37 @@ export default function Home() {
                     </div>
                     <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                       <p className="text-sm text-gray-300">
-                        <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. Your sensitive documents are stored and processed only in Deal Rooms.
+                        <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. Your sensitive documents are stored and processed only in Secure Conference Rooms.
                       </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Voice AI Assistant Widget - Fixed positioning */}
+                <div className="mt-12 max-w-4xl mx-auto">
+                  <h3 className="text-3xl font-bold text-white text-center mb-6">🎙️ AI Voice Sales Assistant</h3>
+                  <p className="text-xl text-gray-300 text-center mb-6">
+                    Experience enterprise-grade AI voice assistance. Available 24/7 to answer questions, schedule appointments, and close deals instantly.
+                  </p>
+                  <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-2xl overflow-hidden shadow-2xl">
+                    <iframe
+                      src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
+                      className="w-full h-[500px]"
+                      title="Joyce AI Voice Sales Assistant"
+                    />
+                  </div>
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 text-center">
+                      <p className="text-2xl font-bold text-blue-400">24/7</p>
+                      <p className="text-sm text-gray-300">Always Available</p>
+                    </div>
+                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/30 text-center">
+                      <p className="text-2xl font-bold text-green-400">3x</p>
+                      <p className="text-sm text-gray-300">Faster Response Time</p>
+                    </div>
+                    <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/30 text-center">
+                      <p className="text-2xl font-bold text-purple-400">95%</p>
+                      <p className="text-sm text-gray-300">Customer Satisfaction</p>
                     </div>
                   </div>
                 </div>
@@ -226,30 +312,30 @@ export default function Home() {
                     <div className="text-sm text-gray-400">ARR (Live)</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-blue-400">{dealRooms.length}</div>
-                    <div className="text-sm text-gray-400">Active Deals</div>
+                    <div className="text-4xl font-bold text-blue-400">{conferenceRooms.length}</div>
+                    <div className="text-sm text-gray-400">Active Conference Rooms</div>
                   </div>
                 </div>
-                <button onClick={() => setActiveSection('dealrooms')} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-lg text-lg font-bold shadow-md transition">
-                  Explore Deal Rooms →
+                <button onClick={() => setActiveSection('conferencerooms')} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-lg text-lg font-bold shadow-md transition">
+                  Explore Conference Rooms →
                 </button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Deal Rooms Section */}
-        {activeSection === 'dealrooms' && (
+        {/* Conference Rooms Section */}
+        {activeSection === 'conferencerooms' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-4xl font-bold text-white">Deal Rooms</h2>
+              <h2 className="text-4xl font-bold text-white">Secure Conference Rooms</h2>
               <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition">
-                + Create New Deal Room
+                + Create New Conference Room
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {dealRooms.map((room) => (
+              {conferenceRooms.map((room) => (
                 <div key={room.id} className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-xl p-6 hover:border-blue-500/50 transition group">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition">{room.name}</h3>
@@ -276,7 +362,7 @@ export default function Home() {
             {showCreateModal && (
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-slate-800 border border-blue-500/30 rounded-xl p-8 max-w-md w-full mx-4">
-                  <h3 className="text-2xl font-bold text-white mb-6">Create Deal Room</h3>
+                  <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
                   <input
                     type="text"
                     placeholder="Room Name"
@@ -294,101 +380,13 @@ export default function Home() {
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
-                    <button onClick={createDealRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
+                    <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Create
                     </button>
                   </div>
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Payroll Audit Section */}
-        {activeSection === 'audit' && (
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-xl p-8">
-              <h2 className="text-3xl font-bold text-white mb-2">Free Payroll Audit (One Quarter)</h2>
-              <p className="text-2xl font-bold text-yellow-400 mb-4">$2,500 Value - Complimentary</p>
-              <p className="text-gray-400 mb-6">Powered by Together AI - Discover hidden savings in 3 months of your payroll data</p>
-              
-              {/* Information about the audit */}
-              <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-bold text-white mb-4">What We Analyze (One Quarter = 3 Months)</h3>
-                <ul className="space-y-2 text-gray-300">
-                  <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
-                    <span>Overpayments and duplicate payments</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
-                    <span>Payroll calculation errors</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
-                    <span>Tax withholding discrepancies</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
-                    <span>Benefits and deduction inconsistencies</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-green-400 mr-2">✓</span>
-                    <span>Compliance risks and audit trail gaps</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* Security Notice */}
-              <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-lg p-6 mb-6">
-                <h3 className="text-xl font-bold text-white mb-3 flex items-center">
-                  <span className="mr-2">🔐</span> Enterprise-Grade Security
-                </h3>
-                <p className="text-gray-300 mb-4">
-                  All payroll file uploads happen exclusively in <span className="font-bold text-purple-400">secure Deal Rooms</span>. Never on this public page.
-                </p>
-                <ul className="space-y-2 text-gray-300 text-sm">
-                  <li className="flex items-start">
-                    <span className="text-purple-400 mr-2">🔒</span>
-                    <span>Military-grade AES-256-GCM encryption</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-purple-400 mr-2">🔑</span>
-                    <span>Single-use access codes</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-purple-400 mr-2">⏰</span>
-                    <span>Auto-expiration after 90 days</span>
-                  </li>
-                  <li className="flex items-start">
-                    <span className="text-purple-400 mr-2">📊</span>
-                    <span>Complete audit trail and SOC 2 Type II compliance</span>
-                  </li>
-                </ul>
-              </div>
-
-              {/* CTA to Deal Rooms */}
-              <div className="text-center">
-                <button onClick={() => setActiveSection('dealrooms')} className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-lg text-lg font-bold shadow-lg transition-all duration-200 hover:scale-105">
-                  Access Secure Deal Room to Upload Files →
-                </button>
-                <p className="text-sm text-gray-400 mt-4">
-                  Your payroll data deserves enterprise-level protection
-                </p>
-              </div>
-            </div>
-
-            {/* Voice Widget */}
-            <div className="mt-12">
-              <h3 className="text-2xl font-bold text-white text-center mb-6">AI Voice Sales Assistant</h3>
-              <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-xl overflow-hidden">
-                <iframe
-                  src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
-                  className="w-full h-[500px]"
-                  title="Joyce AI Voice Sales Assistant"
-                />
-              </div>
-            </div>
           </div>
         )}
       </div>

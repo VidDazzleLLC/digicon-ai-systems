@@ -1,18 +1,18 @@
 /**
- * Secure Deal Room File Upload API
+ * Secure Conference Room File Upload API
  * 
- * This API endpoint handles encrypted file uploads to deal rooms.
+ * This API endpoint handles encrypted file uploads to conference rooms.
  * Features:
  * - AES-256-GCM encryption for all uploaded files
  * - File validation (type, size, virus scan placeholder)
  * - SHA-256 checksum generation for integrity verification
  * - Audit logging for all upload attempts
- * - Access control (requires valid deal room ID)
+ * - Access control (requires valid conference room ID)
  * 
  * Security measures:
  * - Files are encrypted before storage using room-specific encryption key
  * - Encryption keys never exposed in API responses
- * - Upload limited to authorized deal rooms only
+ * - Upload limited to authorized conference rooms only
  * - Complete audit trail maintained
  */
 
@@ -39,7 +39,7 @@ const ALLOWED_MIME_TYPES = [
 ];
 
 interface UploadFileRequest {
-  dealRoomId: string;
+  conferenceRoomId: string;
   category: 'PAYROLL' | 'FINANCIAL' | 'HRIS' | 'ERP' | 'CRM' | 'COMPLIANCE' | 'AI_LOGS' | 'OTHER';
   description?: string;
 }
@@ -135,20 +135,20 @@ async function scanForVirus(fileBuffer: Buffer): Promise<{ clean: boolean; threa
 
 /**
  * Main upload endpoint
- * POST /api/dealroom/upload
+ * POST /api/conferenceroom/upload
  */
 export async function POST(request: NextRequest) {
   try {
     // Parse multipart form data
     const formData = await request.formData();
     const file = formData.get('file') as File;
-    const dealRoomId = formData.get('dealRoomId') as string;
+    const conferenceRoomId = formData.get('conferenceRoomId') as string;
     const category = formData.get('category') as string;
     const description = formData.get('description') as string || '';
     
-    if (!file || !dealRoomId || !category) {
+    if (!file || !conferenceRoomId || !category) {
       return NextResponse.json(
-        { error: 'Missing required fields: file, dealRoomId, category' },
+        { error: 'Missing required fields: file, conferenceRoomId, category' },
         { status: 400 }
       );
     }
@@ -167,7 +167,7 @@ export async function POST(request: NextRequest) {
       filename: file.name,
       size: file.size,
       type: file.type,
-      dealRoomId,
+      conferenceRoomId,
       category
     });
     
@@ -188,9 +188,9 @@ export async function POST(request: NextRequest) {
     // Generate checksum before encryption
     const originalChecksum = generateChecksum(fileBuffer);
     
-    // TODO: Fetch deal room from database to get encryption key
-    // const dealRoom = await prisma.dealRoom.findUnique({
-    //   where: { id: dealRoomId },
+    // TODO: Fetch conference room from database to get encryption key
+    // const conferenceRoom = await prisma.conferenceRoom.findUnique({
+    //   where: { id: conferenceRoomId },
     //   select: { encryptionKey: true, status: true }
     // });
     
@@ -207,9 +207,9 @@ export async function POST(request: NextRequest) {
     });
     
     // TODO: Store encrypted file and metadata in database
-    // const uploadedFile = await prisma.dealRoomFile.create({
+    // const uploadedFile = await prisma.conferenceRoomFile.create({
     //   data: {
-    //     dealRoomId,
+    //     conferenceRoomId,
     //     filename: file.name,
     //     originalFilename: file.name,
     //     mimeType: file.type,
@@ -217,7 +217,7 @@ export async function POST(request: NextRequest) {
     //     category,
     //     description,
     //     checksum: originalChecksum,
-    //     encryptedPath: `/encrypted/${dealRoomId}/${Date.now()}-${file.name}.enc`,
+    //     encryptedPath: `/encrypted/${conferenceRoomId}/${Date.now()}-${file.name}.enc`,
     //     iv,
     //     authTag,
     //     uploadedBy: 'cfo@company.com', // Get from session
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
     
     // Create audit log
     console.log('📝 AUDIT LOG: FILE_UPLOADED', {
-      dealRoomId,
+      conferenceRoomId,
       filename: file.name,
       category,
       size: file.size,
