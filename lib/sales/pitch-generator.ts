@@ -53,9 +53,9 @@ export function generateSalesPitch(
     solution: [
       'Now the good news.',
       'I can fix all of it — in 9 seconds.',
-      'Here's how:',
+      "Here's how:",
       `I cut your waste to <5%. No engineers. No infra. No upfront cost.`,
-      `I take 10% of what I save you. I cut ${wastePercent}% → I earn ${(wastePercent * 0.1).toFixed(1)}% of your spend.`,
+      `I take 10% of what I save you. I cut ${wastePercent}% -> I earn ${(wastePercent * 0.1).toFixed(1)}% of your spend.`,
       'If I save nothing? You pay nothing.',
       'Zero visibility into my method. You get the KPI improvement. I keep the black box.',
       'NDA with $10M penalty if you reverse-engineer.'
@@ -82,7 +82,7 @@ export function generateSalesPitch(
     
     close: [
       `Your move, ${name}.`,
-      `Wire $75K → Cut waste ${calculateTotalGain(beforeAfter)}%.`,
+      `Wire $75K -> Cut waste ${calculateTotalGain(beforeAfter)}%.`,
       `Or keep leaking ${wastePercent}%.`,
       `What's it going to be?`
     ].join('\n')
