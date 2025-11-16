@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     });
 
     // Run audit analysis
-    const auditResult = runAudit({
+    const auditResult = await runAudit({
       systemType,
       rows: parsed.data,
       columns: parsed.meta.fields || []
