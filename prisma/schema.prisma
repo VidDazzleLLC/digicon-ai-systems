@@ -1,0 +1,365 @@
+// Digicon AI Systems - Complete Database Schema
+// Includes Conference Room + Payroll Automation System
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CONFERENCE ROOM MODELS (Existing)
+// ============================================================================
+
+model ConferenceRoom {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Company Information
+  companyName     String
+  companyEmail    String
+  cfoName         String?
+  cfoEmail        String
+  industry        String?
+  annualRevenue   Float?
+  annualBudget    Float?
+  
+  // Access Control
+  accessCode      String    @unique
+  accessCodeHash  String
+  codeGeneratedAt DateTime  @default(now())
+  codeUsed        Boolean   @default(false)
+  firstAccessedAt DateTime?
+  lastAccessedAt  DateTime?
+  accessCount     Int       @default(0)
+  
+  // Expiration & Status
+  status          ConferenceRoomStatus @default(ACTIVE)
+  expiresAt       DateTime
+  closedAt        DateTime?
+  closureReason   String?
+  
+  // Security Settings
+  encryptionKey   String
+  ipWhitelist     String[]
+  mfaEnabled      Boolean   @default(false)
+  mfaPhone        String?
+  
+  // Audit Trail
+  auditLog        AuditLog[]
+  
+  // Uploaded Files
+  files           ConferenceRoomFile[]
+  
+  // Deal Metadata
+  dealValue       Float?
+  dealStage       String?
+  salesRep        String?
+  notes           String?
+  
+  @@index([accessCode])
+  @@index([cfoEmail])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+enum ConferenceRoomStatus {
+  ACTIVE
+  EXPIRED
+  CLOSED_WON
+  CLOSED_LOST
+  REVOKED
+  SUSPENDED
+}
+
+model ConferenceRoomFile {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // File Metadata
+  fileName      String
+  fileSize      Int
+  fileType      String
+  originalName  String
+  
+  // Encryption
+  encryptedPath String
+  encryptionIV  String
+  checksum      String
+  
+  // Classification
+  fileCategory  FileCategory
+  sensitive     Boolean  @default(true)
+  
+  // Upload Info
+  uploadedBy    String
+  uploadedFrom  String
+  userAgent     String?
+  
+  // Processing Status
+  processed     Boolean  @default(false)
+  processedAt   DateTime?
+  auditIncluded Boolean  @default(false)
+  
+  // Relationship
+  conferenceRoom      ConferenceRoom @relation(fields: [conferenceRoomId], references: [id], onDelete: Cascade)
+  conferenceRoomId    String
+  
+  @@index([conferenceRoomId])
+  @@index([fileCategory])
+  @@index([processed])
+}
+
+enum FileCategory {
+  PAYROLL
+  FINANCIAL
+  HRIS
+  ERP
+  CRM
+  COMPLIANCE
+  AI_LOGS
+  OTHER
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Event Details
+  eventType   AuditEventType
+  eventData   Json
+  
+  // Actor Information
+  actorEmail  String
+  actorIP     String
+  userAgent   String?
+  
+  // Context
+  success     Boolean  @default(true)
+  errorMsg    String?
+  
+  // Relationship
+  conferenceRoom    ConferenceRoom @relation(fields: [conferenceRoomId], references: [id], onDelete: Cascade)
+  conferenceRoomId  String
+  
+  @@index([conferenceRoomId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+enum AuditEventType {
+  ROOM_CREATED
+  ACCESS_CODE_SENT
+  ACCESS_ATTEMPT_SUCCESS
+  ACCESS_ATTEMPT_FAILED
+  FILE_UPLOADED
+  FILE_DOWNLOADED
+  FILE_DELETED
+  ROOM_ACCESSED
+  MFA_ENABLED
+  MFA_VERIFIED
+  IP_WHITELIST_UPDATED
+  ROOM_EXPIRED
+  ROOM_CLOSED
+  ROOM_REVOKED
+  SUSPICIOUS_ACTIVITY
+}
+
+// ============================================================================
+// PAYROLL AUTOMATION SYSTEM MODELS (New)
+// ============================================================================
+
+model ApiKey {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // API Key Details
+  key             String   @unique  // Format: digi_XXXXXXXXXXXXXXXX
+  keyHash         String   @unique  // SHA-256 hash of the key
+  encryptedKey    String            // AES-256-GCM encrypted
+  
+  // Customer Information
+  customerId      String
+  customerEmail   String
+  companyName     String
+  
+  // Status & Limits
+  status          ApiKeyStatus @default(ACTIVE)
+  revokedAt       DateTime?
+  revokedReason   String?
+  
+  // Rate Limiting
+  requestsPerDay  Int      @default(1000)
+  requestsToday   Int      @default(0)
+  lastResetAt     DateTime @default(now())
+  
+  // Usage Tracking
+  totalRequests   Int      @default(0)
+  lastUsedAt      DateTime?
+  
+  // Billing
+  stripeCustomerId    String?
+  stripeSubscriptionId String?
+  billingStatus       BillingStatus @default(ACTIVE)
+  
+  // Relationships
+  corrections     PayrollCorrection[]
+  automationLogs  AutomationLog[]
+  
+  @@index([key])
+  @@index([keyHash])
+  @@index([customerId])
+  @@index([status])
+  @@index([customerEmail])
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  SUSPENDED
+  EXPIRED
+}
+
+enum BillingStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIAL
+}
+
+model PayrollCorrection {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Request Details
+  apiKeyId        String
+  apiKey          ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  
+  // Input Data
+  inputData       Json     // Original payroll data submitted
+  employeeId      String?
+  
+  // AI Processing
+  aiModel         String   @default("claude-3-5-sonnet-20241022")
+  aiRequestId     String?
+  aiTokensUsed    Int?
+  processingTime  Int?     // Milliseconds
+  
+  // Corrections Found
+  correctionsFound Boolean @default(false)
+  correctionCount  Int     @default(0)
+  
+  // Output Data
+  outputData      Json?    // Corrected payroll data
+  issuesFound     Json?    // List of issues detected
+  
+  // Status
+  status          CorrectionStatus @default(PROCESSING)
+  errorMsg        String?
+  
+  @@index([apiKeyId])
+  @@index([createdAt])
+  @@index([status])
+}
+
+enum CorrectionStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model AutomationLog {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  
+  // Request Details
+  apiKeyId        String?
+  apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  
+  // Event Details
+  eventType       AutomationEventType
+  eventData       Json
+  
+  // Request Info
+  endpoint        String
+  method          String
+  ipAddress       String
+  userAgent       String?
+  
+  // Response
+  statusCode      Int
+  responseTime    Int?     // Milliseconds
+  success         Boolean  @default(true)
+  errorMsg        String?
+  
+  @@index([apiKeyId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([success])
+}
+
+enum AutomationEventType {
+  API_KEY_GENERATED
+  API_KEY_VALIDATED
+  API_KEY_REVOKED
+  PAYROLL_WEBHOOK_RECEIVED
+  PAYROLL_CORRECTION_STARTED
+  PAYROLL_CORRECTION_COMPLETED
+  RATE_LIMIT_EXCEEDED
+  AUTHENTICATION_FAILED
+  STRIPE_PAYMENT_RECEIVED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
+}
+
+model StripeCustomer {
+  id                  String   @id @default(cuid())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  // Stripe Details
+  stripeCustomerId    String   @unique
+  stripeSubscriptionId String? @unique
+  
+  // Customer Info
+  email               String
+  companyName         String
+  
+  // Subscription Details
+  planId              String?
+  planName            String?  // e.g., "Tier 1 Payroll Automation"
+  priceId             String?
+  amount              Int?     // In cents
+  currency            String   @default("usd")
+  interval            String?  // "month" or "year"
+  
+  // Status
+  subscriptionStatus  SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart  DateTime?
+  currentPeriodEnd    DateTime?
+  cancelAt            DateTime?
+  canceledAt          DateTime?
+  
+  // API Key Reference
+  apiKeyId            String?  @unique
+  
+  @@index([stripeCustomerId])
+  @@index([email])
+  @@index([subscriptionStatus])
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  UNPAID
+  INCOMPLETE
+}
