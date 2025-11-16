@@ -98,6 +98,104 @@ export default function Home() {
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
                   Transform every interaction into instant, compounding revenue with zero-friction automation
+
+                                    {/* Audit Savings & Secure Deal Room Section */}
+                  <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Audit Savings */}
+                    <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/20">
+                      <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                        <span className="mr-2">📊</span> Enterprise Audits & Savings
+                      </h3>
+                      <p className="text-gray-300 mb-6">
+                        We audit 6 core systems to uncover hidden revenue leaks and cost inefficiencies.
+                      </p>
+                      <div className="space-y-4">
+                        <div className="border-l-4 border-green-500 pl-4">
+                          <h4 className="text-white font-bold">Payroll Processing</h4>
+                          <p className="text-gray-400 text-sm">KPI: 15-20% overpayment reduction</p>
+                          <p className="text-green-400 font-bold">Potential Savings: $2.5B/year</p>
+                        </div>
+                        <div className="border-l-4 border-blue-500 pl-4">
+                          <h4 className="text-white font-bold">HRIS/HCM Systems</h4>
+                          <p className="text-gray-400 text-sm">KPI: 97% faster audit cycle (3 weeks → 9s)</p>
+                          <p className="text-blue-400 font-bold">Efficiency Gain: 99.97%</p>
+                        </div>
+                        <div className="border-l-4 border-purple-500 pl-4">
+                          <h4 className="text-white font-bold">ERP/Finance</h4>
+                          <p className="text-gray-400 text-sm">KPI: 30% AI maintenance cost cut</p>
+                          <p className="text-purple-400 font-bold">Annual Savings: $500K-$2M</p>
+                        </div>
+                        <div className="border-l-4 border-yellow-500 pl-4">
+                          <h4 className="text-white font-bold">CRM (Lead-to-Close)</h4>
+                          <p className="text-gray-400 text-sm">KPI: 30% hallucination drop</p>
+                          <p className="text-yellow-400 font-bold">Revenue Impact: $1M-$5M</p>
+                        </div>
+                        <div className="border-l-4 border-red-500 pl-4">
+                          <h4 className="text-white font-bold">Compliance Logs</h4>
+                          <p className="text-gray-400 text-sm">KPI: <1% error rate (audit trails, tax filings)</p>
+                          <p className="text-red-400 font-bold">Risk Reduction: 99%</p>
+                        </div>
+                        <div className="border-l-4 border-cyan-500 pl-4">
+                          <h4 className="text-white font-bold">AI Infrastructure</h4>
+                          <p className="text-gray-400 text-sm">KPI: 95% cost reduction (RAG, vector DB)</p>
+                          <p className="text-cyan-400 font-bold">Infrastructure Savings: $100K-$1M/year</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Secure Deal Room */}
+                    <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/30">
+                      <h3 className="text-2xl font-bold text-white mb-4 flex items-center">
+                        <span className="mr-2">🔐</span> Secure Deal Room
+                      </h3>
+                      <p className="text-gray-300 mb-6">
+                        Enterprise-grade security for sensitive data sharing. CFOs trust us with their most confidential information.
+                      </p>
+                      <div className="space-y-3">
+                        <div className="flex items-start">
+                          <span className="text-green-400 mr-2">✅</span>
+                          <div>
+                            <p className="text-white font-semibold">Military-Grade Encryption</p>
+                            <p className="text-gray-400 text-sm">AES-256-GCM for all uploaded files</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-green-400 mr-2">✅</span>
+                          <div>
+                            <p className="text-white font-semibold">Single-Use Access Codes</p>
+                            <p className="text-gray-400 text-sm">Cryptographically secure, 8-character codes</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-green-400 mr-2">✅</span>
+                          <div>
+                            <p className="text-white font-semibold">Auto-Expiration</p>
+                            <p className="text-gray-400 text-sm">Rooms automatically expire after 90 days</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-green-400 mr-2">✅</span>
+                          <div>
+                            <p className="text-white font-semibold">Complete Audit Trail</p>
+                            <p className="text-gray-400 text-sm">Every access attempt logged for compliance</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="text-green-400 mr-2">✅</span>
+                          <div>
+                            <p className="text-white font-semibold">SOC 2 Type II Compliance</p>
+                            <p className="text-gray-400 text-sm">Enterprise security standards</p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
+                        <p className="text-sm text-gray-300">
+                          <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. We never see your encryption keys.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                 </p>
                 <div className="flex justify-center items-center space-x-8 mb-12">
                   <div className="text-center">
