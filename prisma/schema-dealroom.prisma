@@ -1,0 +1,173 @@
+// Secure Deal Room Database Schema
+// Enterprise-grade security for sensitive customer data
+//
+// Security Features:
+// - Single-use access codes (TOTP-based, 8-character alphanumeric)
+// - Automatic expiration after deal closure
+// - AES-256 encryption for all uploaded files
+// - Access logging and audit trails
+// - IP whitelist support (optional)
+// - Multi-factor authentication support
+//
+// Workflow:
+// 1. Customer expresses interest → Deal room created
+// 2. Unique access code generated → Sent to CFO via email
+// 3. CFO uses code → Uploads sensitive docs (payroll, finance, compliance)
+// 4. Files encrypted at rest → Only Digicon can decrypt
+// 5. Audit completes → Deal closes → Room expires
+
+model DealRoom {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Company Information
+  companyName     String
+  companyEmail    String
+  cfoName         String?
+  cfoEmail        String
+  industry        String?
+  annualRevenue   Float?    // For context
+  annualBudget    Float?    // For audit scoping
+  
+  // Access Control
+  accessCode      String    @unique  // 8-char alphanumeric (e.g., "A7X9K2M4")
+  accessCodeHash  String    // Hashed version for security
+  codeGeneratedAt DateTime  @default(now())
+  codeUsed        Boolean   @default(false)
+  firstAccessedAt DateTime?
+  lastAccessedAt  DateTime?
+  accessCount     Int       @default(0)
+  
+  // Expiration & Status
+  status          DealRoomStatus @default(ACTIVE)
+  expiresAt       DateTime  // Auto-set to 90 days from creation
+  closedAt        DateTime?
+  closureReason   String?   // "DEAL_WON", "DEAL_LOST", "EXPIRED", "REVOKED"
+  
+  // Security Settings
+  encryptionKey   String    // Unique AES-256 key for this room
+  ipWhitelist     String[]  // Optional: Restrict access to specific IPs
+  mfaEnabled      Boolean   @default(false)
+  mfaPhone        String?
+  
+  // Audit Trail
+  auditLog        AuditLog[]
+  
+  // Uploaded Files
+  files           DealRoomFile[]
+  
+  // Deal Metadata
+  dealValue       Float?    // Estimated upfront fee
+  dealStage       String?   // "INTEREST", "DOCUMENT_UPLOAD", "AUDIT_RUNNING", "PROPOSAL_SENT", "NEGOTIATION", "CLOSED"
+  salesRep        String?   // Assigned sales person
+  notes           String?   // Internal notes
+  
+  @@index([accessCode])
+  @@index([cfoEmail])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+enum DealRoomStatus {
+  ACTIVE       // Room is open and accessible
+  EXPIRED      // Automatic expiration (90 days)
+  CLOSED_WON   // Deal closed successfully
+  CLOSED_LOST  // Deal lost
+  REVOKED      // Access manually revoked
+  SUSPENDED    // Temporarily suspended (security concerns)
+}
+
+model DealRoomFile {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // File Metadata
+  fileName      String
+  fileSize      Int      // Bytes
+  fileType      String   // MIME type
+  originalName  String   // Original filename before sanitization
+  
+  // Encryption
+  encryptedPath String   // Path to encrypted file in storage
+  encryptionIV  String   // Initialization vector for AES-256
+  checksum      String   // SHA-256 hash for integrity verification
+  
+  // Classification
+  fileCategory  FileCategory
+  sensitive     Boolean  @default(true)  // All files are sensitive by default
+  
+  // Upload Info
+  uploadedBy    String   // CFO email
+  uploadedFrom  String   // IP address
+  userAgent     String?  // Browser/client info
+  
+  // Processing Status
+  processed     Boolean  @default(false)
+  processedAt   DateTime?
+  auditIncluded Boolean  @default(false)  // Included in audit analysis
+  
+  // Relationship
+  dealRoom      DealRoom @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
+  dealRoomId    String
+  
+  @@index([dealRoomId])
+  @@index([fileCategory])
+  @@index([processed])
+}
+
+enum FileCategory {
+  PAYROLL       // ADP, Gusto, Workday exports
+  FINANCIAL     // P&L, balance sheets, GL entries
+  HRIS          // Employee data, time tracking
+  ERP           // SAP, Oracle, NetSuite data
+  CRM           // Salesforce, HubSpot exports
+  COMPLIANCE    // Tax filings, audit trails
+  AI_LOGS       // AI system usage logs
+  OTHER         // Uncategorized
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Event Details
+  eventType   AuditEventType
+  eventData   Json     // Flexible JSON for event-specific data
+  
+  // Actor Information
+  actorEmail  String   // Who performed the action
+  actorIP     String   // IP address
+  userAgent   String?  // Browser/client
+  
+  // Context
+  success     Boolean  @default(true)
+  errorMsg    String?
+  
+  // Relationship
+  dealRoom    DealRoom @relation(fields: [dealRoomId], references: [id], onDelete: Cascade)
+  dealRoomId  String
+  
+  @@index([dealRoomId])
+  @@index([eventType])
+  @@index([createdAt])
+}
+
+enum AuditEventType {
+  ROOM_CREATED
+  ACCESS_CODE_SENT
+  ACCESS_ATTEMPT_SUCCESS
+  ACCESS_ATTEMPT_FAILED
+  FILE_UPLOADED
+  FILE_DOWNLOADED
+  FILE_DELETED
+  ROOM_ACCESSED
+  MFA_ENABLED
+  MFA_VERIFIED
+  IP_WHITELIST_UPDATED
+  ROOM_EXPIRED
+  ROOM_CLOSED
+  ROOM_REVOKED
+  SUSPICIOUS_ACTIVITY
+}
