@@ -76,33 +76,35 @@ export async function POST(request: NextRequest) {
     };
 
     // Step 2: Run complete 6-system audit
-    const auditResults = await runAudit(auditData);
+    const auditResult = await runAudit(auditData);
 
-    // ...rest of your code remains unchanged...
-    // Step 2: Calculate average waste percentage across all systems
-    const wastePercentages = auditResults.map(result => {
-      const wasteKPI = result.kpis.find(kpi => 
-        kpi.metric.toLowerCase().includes('waste') ||
-        kpi.metric.toLowerCase().includes('reduction') ||
-        kpi.metric.toLowerCase().includes('savings')
-      );
-      return wasteKPI ? parseFloat(wasteKPI.value) : 0;
-    });
+    // Step 2: Calculate waste percentage from the single system audit
+    // Extract waste percentage from kpiMetrics
+    const kpis = auditResult.kpiMetrics;
+    let avgWastePercent = 0;
     
-    const avgWastePercent = wastePercentages.reduce((a, b) => a + b, 0) / wastePercentages.length;
+    if (kpis.wasteReduction) {
+      const match = kpis.wasteReduction.match(/\d+/);
+      avgWastePercent = match ? parseFloat(match[0]) : 0;
+    } else if (kpis.costSavings) {
+      const match = kpis.costSavings.match(/\d+/);
+      avgWastePercent = match ? parseFloat(match[0]) : 0;
+    } else if (kpis.errorReduction) {
+      const match = kpis.errorReduction.match(/\d+/);
+      avgWastePercent = match ? parseFloat(match[0]) : 0;
+    }
 
     // Step 3: Generate complete pricing proposal with payment plans
     const pricingProposal = generateCompleteProposal(
-      avgWastePercent,
-      annualBudget,
-      companyRevenue
+      auditResult,
+      companyRevenue,
+      annualBudget
     );
 
     // Step 4: Generate complete sales pitch and email
     const salesEmail = generateSalesEmail(
-      auditResults,
-      avgWastePercent,
-      annualBudget,
+      auditResult,
+      '', // cfoEmail not provided in this flow
       cfoName,
       companyName
     );
@@ -111,17 +113,16 @@ export async function POST(request: NextRequest) {
     const completeReport = {
       // Audit Analysis Results
       audit: {
-        systems: auditResults.map(result => ({
-          system: result.system,
-          kpis: result.kpis,
-          findings: result.findings.slice(0, 3), // Top 3 findings per system
-          confidence: result.confidence,
-          recommendation: result.recommendation
-        })),
+        systems: [{
+          system: auditResult.systemType,
+          kpis: auditResult.kpiMetrics,
+          findings: auditResult.findings.slice(0, 3), // Top 3 findings
+          confidence: auditResult.confidence
+        }],
         summary: {
-          totalSystemsAnalyzed: auditResults.length,
+          totalSystemsAnalyzed: 1,
           avgWastePercent: avgWastePercent.toFixed(1),
-          avgConfidence: (auditResults.reduce((sum, r) => sum + r.confidence, 0) / auditResults.length).toFixed(1)
+          avgConfidence: auditResult.confidence.toFixed(1)
         }
       },
 
