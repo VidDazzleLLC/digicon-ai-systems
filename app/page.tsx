@@ -277,17 +277,17 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Voice AI Assistant Widget - Fixed positioning */}
+                {/* Voice AI Concierge Widget - Fixed positioning */}
                 <div className="mt-12 max-w-4xl mx-auto">
-                  <h3 className="text-3xl font-bold text-white text-center mb-6">🎙️ AI Voice Sales Assistant</h3>
+                  <h3 className="text-3xl font-bold text-white text-center mb-6">🎙️ AI Voice Concierge</h3>
                   <p className="text-xl text-gray-300 text-center mb-6">
                     Experience enterprise-grade AI voice assistance. Available 24/7 to answer questions, schedule appointments, and close deals instantly.
                   </p>
-                  <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-2xl overflow-hidden shadow-2xl">
+                  <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-2xl shadow-2xl pb-6">
                     <iframe
                       src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
-                      className="w-full h-[500px]"
-                      title="Joyce AI Voice Sales Assistant"
+                      className="w-full h-[650px]"
+                      title="Joyce AI Voice Concierge"
                     />
                   </div>
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
