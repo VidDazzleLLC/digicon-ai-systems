@@ -3,12 +3,12 @@
     "lib": [
       "dom",
       "dom.iterable",
-      "esnext",
-          "baseUrl": ".",
-          "paths": {
-            "@/*": ["./*"]
-                }
+      "esnext"
     ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    },
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
