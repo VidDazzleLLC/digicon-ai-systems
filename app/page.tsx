@@ -327,8 +327,37 @@ export default function Home() {
         {/* Conference Rooms Section */}
         {activeSection === 'conferencerooms' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {/* How to Access Instructions */}
+            <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 border-2 border-blue-500/50 rounded-2xl p-8 mb-12">
+              <h3 className="text-3xl font-bold text-white mb-6 flex items-center">
+                <span className="mr-3">🔐</span> How to Access Your Secure Conference Room
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="bg-slate-800/50 rounded-xl p-6 border border-blue-500/30">
+                  <div className="text-4xl font-bold text-blue-400 mb-3">1</div>
+                  <h4 className="text-xl font-bold text-white mb-2">Request Access</h4>
+                  <p className="text-gray-300">Click "Create New Conference Room" or contact our team. We'll create a dedicated room for your company.</p>
+                </div>
+                <div className="bg-slate-800/50 rounded-xl p-6 border border-blue-500/30">
+                  <div className="text-4xl font-bold text-green-400 mb-3">2</div>
+                  <h4 className="text-xl font-bold text-white mb-2">Receive Your Code</h4>
+                  <p className="text-gray-300">You'll receive a unique 8-character access code via email. This code is single-use and expires in 90 days.</p>
+                </div>
+                <div className="bg-slate-800/50 rounded-xl p-6 border border-blue-500/30">
+                  <div className="text-4xl font-bold text-purple-400 mb-3">3</div>
+                  <h4 className="text-xl font-bold text-white mb-2">Upload & Collaborate</h4>
+                  <p className="text-gray-300">Use your code to access your room and securely upload documents. All files are encrypted with AES-256-GCM.</p>
+                </div>
+              </div>
+              <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
+                <p className="text-sm text-gray-300">
+                  <span className="font-bold text-blue-400">📌 Note:</span> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference Room") for easy identification. All data remains confidential and is never shared with third parties.
+                </p>
+              </div>
+            </div>
+
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-4xl font-bold text-white">Secure Conference Rooms</h2>
+              <h2 className="text-4xl font-bold text-white">Your Conference Rooms</h2>
               <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition">
                 + Create New Conference Room
               </button>
@@ -393,10 +422,74 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="mt-24 border-t border-blue-500/20 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <p className="text-center text-gray-400 text-sm">
-            Built with Next.js + Supabase + Together AI | MCP Layer Ready for Custom Nodes
-          </p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+            {/* Company Info */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Digicon AI Systems™</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Enterprise-grade AI solutions with uncompromising security and privacy. Your data is never shared with third parties.
+              </p>
+              <div className="flex space-x-4">
+                <a href="mailto:contact@digicon-ai-systems.com" className="text-blue-400 hover:text-blue-300 transition">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            {/* Legal Links */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Legal</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/terms" className="text-gray-400 hover:text-white transition text-sm">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="/privacy" className="text-gray-400 hover:text-white transition text-sm">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="/gdpr" className="text-gray-400 hover:text-white transition text-sm">
+                    GDPR Compliance
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Security & Data Protection */}
+            <div>
+              <h3 className="text-xl font-bold text-white mb-4">Security & Privacy</h3>
+              <ul className="space-y-2 text-gray-400 text-sm">
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>SOC 2 Type II Certified</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>GDPR Compliant</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>AES-256-GCM Encryption</span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-400 mr-2">✓</span>
+                  <span>Zero Third-Party Data Sharing</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-blue-500/20 pt-8">
+            <p className="text-center text-gray-400 text-sm">
+              © 2025 Digicon AI Systems™. All rights reserved. | Built with Next.js + Supabase + Together AI
+            </p>
+          </div>
         </div>
       </footer>
 
