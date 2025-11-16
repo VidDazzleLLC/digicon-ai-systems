@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
-import { runAudit } from '@/lib/audit/analyzers';
+import { runAudit, AuditData } from '@/lib/audit/analyzers';
 import { generateSalesEmail } from '@/lib/sales/pitch-generator';
 import { generateCompleteProposal } from '@/lib/sales/pricing-calculator';
 
@@ -23,6 +23,7 @@ interface AuditReportRequest {
   cfoName?: string;
   companyName?: string;
   industry?: string;
+  systemType?: 'payroll' | 'hris' | 'erp' | 'crm' | 'compliance' | 'ai_infrastructure';
 }
 
 export async function POST(request: NextRequest) {
@@ -35,7 +36,8 @@ export async function POST(request: NextRequest) {
       annualBudget,
       cfoName = 'CFO',
       companyName = 'your organization',
-      industry = 'enterprise'
+      industry = 'enterprise',
+      systemType = 'payroll' // <-- Default or required
     } = body;
 
     // Validate required fields
@@ -66,9 +68,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Run complete 6-system audit
-    const auditResults = await runAudit(parseResult.data);
+    // Step 1: Restructure parseResult into AuditData
+    const auditData: AuditData = {
+      systemType,
+      rows: parseResult.data as any[],
+      columns: (parseResult.meta && parseResult.meta.fields) ? parseResult.meta.fields : []
+    };
 
+    // Step 2: Run complete 6-system audit
+    const auditResults = await runAudit(auditData);
+
+    // ...rest of your code remains unchanged...
     // Step 2: Calculate average waste percentage across all systems
     const wastePercentages = auditResults.map(result => {
       const wasteKPI = result.kpis.find(kpi => 
