@@ -143,7 +143,10 @@ export default function Home() {
                   <p className="text-gray-400 mb-4">{room.description}</p>
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-500">{room.participants} participants</div>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <button 
+                      onClick={() => alert(`Welcome to ${room.name}! This deal room feature will be fully implemented soon.`)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                    >
                       Join Room
                     </button>
                   </div>
