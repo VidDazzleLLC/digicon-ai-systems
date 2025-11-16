@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
       createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
       expiresAt: new Date(Date.now() + 83 * 24 * 60 * 60 * 1000), // 83 days from now
       status: 'ACTIVE',
-      cfofirst: 'John',
+      cfoFirst: 'John',
       cfoLast: 'Smith',
       cfoEmail: 'john.smith@acmecorp.com'
     };
@@ -203,11 +203,7 @@ export async function POST(request: NextRequest) {
     // });
     
     // Promote lead to sales pipeline in AITable (async, don't block response)
-    promoteToSalesPipeline(dealRoomId, {
-      companyName: mockDealRoom.companyName,
-      cfoEmail: mockDealRoom.cfoEmail,
-      status: 'Engaged'
-    }).catch(error => {
+    promoteToSalesPipeline(dealRoomId).catch(error => {
       console.error('Failed to promote lead to sales pipeline:', error);
     });
     
