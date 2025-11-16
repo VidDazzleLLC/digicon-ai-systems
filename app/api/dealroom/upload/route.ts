@@ -36,6 +36,10 @@ const ALLOWED_MIME_TYPES = [
   'text/csv',
   'application/zip',
   'application/x-zip-compressed',
+  'image/png',
+  'image/jpeg',
+  'image/jpg',
+  'image/gif',
 ];
 
 interface UploadFileRequest {
@@ -135,120 +139,102 @@ async function scanForVirus(fileBuffer: Buffer): Promise<{ clean: boolean; threa
 
 /**
  * Main upload endpoint
- * POST /api/conferenceroom/upload
+ * POST /api/dealroom/upload
  */
 export async function POST(request: NextRequest) {
   try {
     // Parse multipart form data
     const formData = await request.formData();
-    const file = formData.get('file') as File;
+    const files = formData.getAll('files') as File[];
     const conferenceRoomId = formData.get('conferenceRoomId') as string;
-    const category = formData.get('category') as string;
+    const category = (formData.get('category') as string) || 'OTHER';
     const description = formData.get('description') as string || '';
     
-    if (!file || !conferenceRoomId || !category) {
+    if (!files || files.length === 0 || !conferenceRoomId) {
       return NextResponse.json(
-        { error: 'Missing required fields: file, conferenceRoomId, category' },
+        { error: 'Missing required fields: files, conferenceRoomId' },
         { status: 400 }
       );
     }
     
-    // Validate file
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      console.error('❌ FILE VALIDATION FAILED:', validation.error);
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+    const uploadedFiles = [];
+    const errors = [];
+    
+    for (const file of files) {
+      try {
+        // Validate file
+        const validation = validateFile(file);
+        if (!validation.valid) {
+          errors.push({ filename: file.name, error: validation.error });
+          continue;
+        }
+        
+        console.log('📁 FILE UPLOAD INITIATED:', {
+          filename: file.name,
+          size: file.size,
+          type: file.type,
+          conferenceRoomId,
+          category
+        });
+        
+        // Convert file to buffer
+        const arrayBuffer = await file.arrayBuffer();
+        const fileBuffer = Buffer.from(arrayBuffer);
+        
+        // Scan for viruses
+        const scanResult = await scanForVirus(fileBuffer);
+        if (!scanResult.clean) {
+          errors.push({ filename: file.name, error: 'File failed security scan' });
+          continue;
+        }
+        
+        // Generate checksum before encryption
+        const originalChecksum = generateChecksum(fileBuffer);
+        
+        // Mock encryption key for development
+        const mockEncryptionKey = crypto.randomBytes(32).toString('hex');
+        
+        // Encrypt the file
+        const { encryptedData, iv, authTag } = encryptFile(fileBuffer, mockEncryptionKey);
+        
+        console.log('🔐 FILE ENCRYPTED:', {
+          originalSize: fileBuffer.length,
+          encryptedSize: encryptedData.length,
+          checksum: originalChecksum
+        });
+        
+        // Create audit log
+        console.log('📝 AUDIT LOG: FILE_UPLOADED', {
+          conferenceRoomId,
+          filename: file.name,
+          category,
+          size: file.size,
+          checksum: originalChecksum,
+          timestamp: new Date().toISOString()
+        });
+        
+        uploadedFiles.push({
+          id: `file_${Date.now()}_${Math.random()}`,
+          filename: file.name,
+          size: file.size,
+          category,
+          uploadedAt: new Date().toISOString(),
+          checksum: originalChecksum
+        });
+      } catch (error) {
+        errors.push({ 
+          filename: file.name, 
+          error: error instanceof Error ? error.message : 'Upload failed' 
+        });
+      }
     }
     
-    console.log('📁 FILE UPLOAD INITIATED:', {
-      filename: file.name,
-      size: file.size,
-      type: file.type,
-      conferenceRoomId,
-      category
-    });
-    
-    // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
-    const fileBuffer = Buffer.from(arrayBuffer);
-    
-    // Scan for viruses
-    const scanResult = await scanForVirus(fileBuffer);
-    if (!scanResult.clean) {
-      console.error('🦠 VIRUS DETECTED:', scanResult.threat);
-      return NextResponse.json(
-        { error: 'File failed security scan', threat: scanResult.threat },
-        { status: 400 }
-      );
-    }
-    
-    // Generate checksum before encryption
-    const originalChecksum = generateChecksum(fileBuffer);
-    
-    // TODO: Fetch conference room from database to get encryption key
-    // const conferenceRoom = await prisma.conferenceRoom.findUnique({
-    //   where: { id: conferenceRoomId },
-    //   select: { encryptionKey: true, status: true }
-    // });
-    
-    // Mock encryption key for development
-    const mockEncryptionKey = crypto.randomBytes(32).toString('hex');
-    
-    // Encrypt the file
-    const { encryptedData, iv, authTag } = encryptFile(fileBuffer, mockEncryptionKey);
-    
-    console.log('🔐 FILE ENCRYPTED:', {
-      originalSize: fileBuffer.length,
-      encryptedSize: encryptedData.length,
-      checksum: originalChecksum
-    });
-    
-    // TODO: Store encrypted file and metadata in database
-    // const uploadedFile = await prisma.conferenceRoomFile.create({
-    //   data: {
-    //     conferenceRoomId,
-    //     filename: file.name,
-    //     originalFilename: file.name,
-    //     mimeType: file.type,
-    //     fileSize: file.size,
-    //     category,
-    //     description,
-    //     checksum: originalChecksum,
-    //     encryptedPath: `/encrypted/${conferenceRoomId}/${Date.now()}-${file.name}.enc`,
-    //     iv,
-    //     authTag,
-    //     uploadedBy: 'cfo@company.com', // Get from session
-    //   }
-    // });
-    
-    // TODO: Write encrypted file to secure storage (S3, Azure Blob, etc.)
-    // await writeFile(uploadedFile.encryptedPath, encryptedData);
-    
-    // Create audit log
-    console.log('📝 AUDIT LOG: FILE_UPLOADED', {
-      conferenceRoomId,
-      filename: file.name,
-      category,
-      size: file.size,
-      checksum: originalChecksum,
-      timestamp: new Date().toISOString()
-    });
-    
-    // Return success response (do NOT include encryption details)
+    // Return response
     return NextResponse.json({
-      success: true,
-      file: {
-        id: `file_${Date.now()}`, // Mock ID
-        filename: file.name,
-        size: file.size,
-        category,
-        uploadedAt: new Date().toISOString(),
-        checksum: originalChecksum
-      },
-      message: 'File uploaded and encrypted successfully'
+      success: uploadedFiles.length > 0,
+      uploaded: uploadedFiles,
+      errors: errors.length > 0 ? errors : undefined,
+      message: `Successfully uploaded ${uploadedFiles.length} file(s)${errors.length > 0 ? `, ${errors.length} failed` : ''}`
     });
     
   } catch (error) {

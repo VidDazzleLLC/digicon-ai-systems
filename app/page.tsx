@@ -22,6 +22,13 @@ export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
+  const [newRoomEmail, setNewRoomEmail] = useState('');
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState('');
+  const [accessCode, setAccessCode] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -30,19 +37,109 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const createConferenceRoom = () => {
-    if (!newRoomName.trim()) return;
-    const newRoom: ConferenceRoom = {
-      id: Date.now().toString(),
-      name: newRoomName,
-      description: newRoomDesc,
-      participants: 1,
-      status: 'active'
-    };
-    setConferenceRooms([...conferenceRooms, newRoom]);
-    setNewRoomName('');
-    setNewRoomDesc('');
-    setShowCreateModal(false);
+  const createConferenceRoom = async () => {
+    if (!newRoomName.trim() || !newRoomEmail.trim()) {
+      setErrorMessage('Please fill in all required fields');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newRoomEmail)) {
+      setErrorMessage('Please enter a valid email address');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    try {
+      const response = await fetch('/api/dealroom/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyName: newRoomName,
+          cfoEmail: newRoomEmail,
+          companyEmail: newRoomEmail,
+          notes: newRoomDesc
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create conference room');
+      }
+
+      // Add new room to list
+      const newRoom: ConferenceRoom = {
+        id: data.conferenceRoom.id,
+        name: newRoomName,
+        description: newRoomDesc,
+        participants: 1,
+        status: 'active'
+      };
+      setConferenceRooms([...conferenceRooms, newRoom]);
+      
+      setSuccessMessage('Access code sent to your email!');
+      setNewRoomName('');
+      setNewRoomDesc('');
+      setNewRoomEmail('');
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setShowCreateModal(false);
+        setSuccessMessage('');
+      }, 2000);
+
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Failed to create room');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    setSelectedRoomId(roomId);
+    setAccessCode('');
+    setErrorMessage('');
+    setShowJoinModal(true);
+  };
+
+  const verifyAccessCode = async () => {
+    if (!accessCode.trim()) {
+      setErrorMessage('Please enter an access code');
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage('');
+
+    try {
+      const response = await fetch('/api/dealroom/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          conferenceRoomId: selectedRoomId,
+          accessCode: accessCode.toUpperCase()
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Invalid access code');
+      }
+
+      // Redirect to conference room portal
+      window.location.href = `/conferenceroom/${selectedRoomId}`;
+
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Invalid access code');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -379,7 +476,10 @@ export default function Home() {
                   <p className="text-gray-400 mb-4">{room.description}</p>
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-500">{room.participants} participants</div>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+                    <button 
+                      onClick={() => handleJoinRoom(room.id)}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
+                    >
                       Join Room
                     </button>
                   </div>
@@ -392,25 +492,111 @@ export default function Home() {
               <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
                 <div className="bg-slate-800 border border-blue-500/30 rounded-xl p-8 max-w-md w-full mx-4">
                   <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
+                  
+                  {errorMessage && (
+                    <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
+                      {errorMessage}
+                    </div>
+                  )}
+                  
+                  {successMessage && (
+                    <div className="bg-green-500/20 border border-green-500 text-green-300 px-4 py-3 rounded-lg mb-4">
+                      {successMessage}
+                    </div>
+                  )}
+                  
                   <input
                     type="text"
-                    placeholder="Room Name"
+                    placeholder="Company Name *"
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                    disabled={isLoading}
+                  />
+                  <input
+                    type="email"
+                    placeholder="Your Email *"
+                    value={newRoomEmail}
+                    onChange={(e) => setNewRoomEmail(e.target.value)}
+                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                    disabled={isLoading}
                   />
                   <textarea
-                    placeholder="Description"
+                    placeholder="Description (optional)"
                     value={newRoomDesc}
                     onChange={(e) => setNewRoomDesc(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 h-24 focus:outline-none focus:border-blue-500"
+                    disabled={isLoading}
                   />
                   <div className="flex space-x-4">
-                    <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
+                    <button 
+                      onClick={() => {
+                        setShowCreateModal(false);
+                        setErrorMessage('');
+                        setSuccessMessage('');
+                      }} 
+                      className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition"
+                      disabled={isLoading}
+                    >
                       Cancel
                     </button>
-                    <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
-                      Create
+                    <button 
+                      onClick={createConferenceRoom} 
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition disabled:opacity-50"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Creating...' : 'Create'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Join Room Modal */}
+            {showJoinModal && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                <div className="bg-slate-800 border border-blue-500/30 rounded-xl p-8 max-w-md w-full mx-4">
+                  <h3 className="text-2xl font-bold text-white mb-4">Enter Access Code</h3>
+                  <p className="text-gray-300 mb-6">Please enter your 8-character access code to join this secure conference room.</p>
+                  
+                  {errorMessage && (
+                    <div className="bg-red-500/20 border border-red-500 text-red-300 px-4 py-3 rounded-lg mb-4">
+                      {errorMessage}
+                    </div>
+                  )}
+                  
+                  <input
+                    type="text"
+                    placeholder="Enter Access Code (e.g., A7X9K2M4)"
+                    value={accessCode}
+                    onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
+                    maxLength={8}
+                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-blue-500 font-mono text-lg tracking-wider text-center"
+                    disabled={isLoading}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        verifyAccessCode();
+                      }
+                    }}
+                  />
+                  <div className="flex space-x-4">
+                    <button 
+                      onClick={() => {
+                        setShowJoinModal(false);
+                        setAccessCode('');
+                        setErrorMessage('');
+                      }} 
+                      className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition"
+                      disabled={isLoading}
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onClick={verifyAccessCode} 
+                      className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition disabled:opacity-50"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Verifying...' : 'Join Room'}
                     </button>
                   </div>
                 </div>
