@@ -79,8 +79,7 @@ export default function Home() {
                   Transform every interaction into instant, compounding revenue with zero-friction automation
                 </p>
 
-                {/* FREE PAYROLL AUDIT CTA - Prominent on first page view */}
-              <div className="mb-12 bg-gradient-to-r from-red-900/40 to-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl shadow-red-500/50 animate-pulse">
+            {/* FREE PAYROLL AUDIT CTA - Prominent on first page view */}              <div className="mb-12 bg-gradient-to-r from-red-900/40 to-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl shadow-red-500/50 animate-pulse">
                 <div className="text-center">
                   <div className="inline-block bg-gradient-to-r from-red-600 to-yellow-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce">
                     🔥 BLACK FRIDAY 2025 SPECIAL
