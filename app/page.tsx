@@ -45,7 +45,8 @@ export default function Home() {
     setShowCreateModal(false);
   };
 
-  return (
+  return (75
+          
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-slate-900/80 backdrop-blur-lg border-b border-blue-500/20 z-50">
@@ -86,8 +87,7 @@ export default function Home() {
                     🔥 BLACK FRIDAY 2025 SPECIAL
                   </div>
                   <h3 className="text-5xl font-extrabold bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-transparent mb-3">
-                    Payroll Audit - Only $299 <span className="text-red-400">(3 Months)</span>
-                  </h3>
+                            Payroll Audit - Only $249 <span className="text-red-400">(3 Months)</span>                  </h3>
                   <p className="text-3xl font-bold text-white mb-2">
                     <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $299</span>
                   </p>
@@ -106,8 +106,7 @@ export default function Home() {
                 </div>
               </div>                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                        <p className="text-3xl font-bold text-green-400">15-20%</p>
-                        <p className="text-sm text-gray-300">Average Savings Found</p>
+                                <p className="text-3xl font-bold text-green-400">15-35%</p>                        <p className="text-sm text-gray-300">Average Savings Found</p>
                       </div>
                       <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
                         <p className="text-3xl font-bold text-green-400">$0</p>
