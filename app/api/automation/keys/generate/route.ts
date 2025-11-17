@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
     console.log(`- Company: ${companyName}`);
     
     // Check if customer already has an active API key
-    const existingKey = await prisma.apiKey.findFirst({
+    const existingKey = await prisma.payrollApiKey.findFirst({
       where: {
         customerEmail,
         status: 'ACTIVE',
@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
     });
     
     // Log event
-    await prisma.automationLog.create({
+    await prisma.payrollAutomationLog.create({
       data: {
         apiKeyId: apiKeyData.id,
         eventType: 'API_KEY_GENERATED',
