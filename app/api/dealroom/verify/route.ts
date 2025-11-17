@@ -20,6 +20,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
+import { getRoom } from '@/lib/conferenceRoomStorage';
 // import { PrismaClient } from '@prisma/client';
 // const prisma = new PrismaClient();
 import { promoteToSalesPipeline } from '@/lib/integrations/aitable';
@@ -93,19 +94,7 @@ export async function POST(request: NextRequest) {
     // });
     
     // Mock conference room data for development
-    const mockConferenceRoom = {
-      id: conferenceRoomId,
-      companyName: 'Acme Corp',
-      accessCodeHash: '$2a$10$MOCKHASHMOCKHASHMOCKHASHMOCKHASHMOCKHASHMO', // Mock bcrypt hash
-      codeUsed: false,
-      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 7 days ago
-      expiresAt: new Date(Date.now() + 83 * 24 * 60 * 60 * 1000), // 83 days from now
-      status: 'ACTIVE',
-      cfoFirst: 'John',
-      cfoLast: 'Smith',
-      cfoEmail: 'john.smith@acmecorp.com'
-    };
-    
+const conferenceRoom = getRoom(conferenceRoomId);
     // Check if room exists
     if (!mockConferenceRoom) {
       console.error('❌ INVALID ROOM: Conference room not found');
@@ -162,7 +151,7 @@ export async function POST(request: NextRequest) {
     // const isValidCode = await bcrypt.compare(accessCode, mockConferenceRoom.accessCodeHash);
     
     // For development, simulate code verification
-    const isValidCode = accessCode.length === 8; // Mock validation
+    const isValidCode = await bcrypt.compare(accessCode, conferenceRoom?.accessCodeHash || ''); // Mock validation
     
     if (!isValidCode) {
       console.error('❌ INVALID CODE: Access code does not match');
