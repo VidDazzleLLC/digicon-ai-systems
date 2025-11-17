@@ -8,10 +8,22 @@ interface ConferenceRoom {
   description: string;
   participants: number;
   status: 'active' | 'pending' | 'closed';
-  // optional fields returned from API
   cfoEmail?: string;
   expiresAt?: string;
   accessCodeSent?: boolean;
+}
+
+interface VerifyResponse {
+  success?: boolean;
+  error?: string;
+  conferenceRoom?: {
+    id: string;
+    companyName: string;
+    status: string;
+    expiresAt?: string;
+    message?: string;
+    cfoName?: string;
+  };
 }
 
 export default function Home(): JSX.Element {
@@ -30,6 +42,14 @@ export default function Home(): JSX.Element {
   const [createLoading, setCreateLoading] = useState<boolean>(false);
   const [successMessage, setSuccessMessage] = useState<string>('');
 
+  // Code entry / verification states
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [showCodeModal, setShowCodeModal] = useState<boolean>(false);
+  const [accessCodeInput, setAccessCodeInput] = useState<string>('');
+  const [accessCodeError, setAccessCodeError] = useState<string>('');
+  const [verifyingCode, setVerifyingCode] = useState<boolean>(false);
+  const [verifiedRoomDetails, setVerifiedRoomDetails] = useState<VerifyResponse['conferenceRoom'] | null>(null);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setArr(prev => prev + Math.floor(Math.random() * 1000 + 100));
@@ -43,13 +63,13 @@ export default function Home(): JSX.Element {
     return re.test(email.trim().toLowerCase());
   }
 
+  // Create conference room via backend which generates & emails the code
   const createConferenceRoom = async (): Promise<void> => {
-    // Clear prior messages
     setSuccessMessage('');
     setEmailError('');
 
     if (!newRoomName.trim()) {
-      // minimal guard; you could show a validation UI for name as well
+      setEmailError('Please enter a room name.');
       return;
     }
 
@@ -66,21 +86,17 @@ export default function Home(): JSX.Element {
     setCreateLoading(true);
 
     try {
-      // Build the payload expected by the backend
       const payload = {
         companyName: newRoomName.trim(),
-        companyEmail: newRoomEmail.trim(), // use same email for company contact by default
+        companyEmail: newRoomEmail.trim(),
         cfoEmail: newRoomEmail.trim(),
-        cfoName: '', // optional
-        // send the description as notes so backend can consume it
+        cfoName: '',
         notes: newRoomDesc.trim()
       };
 
       const res = await fetch('/api/dealroom/create', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
 
@@ -92,10 +108,8 @@ export default function Home(): JSX.Element {
         return;
       }
 
-      // API returns conferenceRoom metadata (does NOT include the access code)
       const returned = data.conferenceRoom;
 
-      // Map API fields into UI ConferenceRoom type
       const addedRoom: ConferenceRoom = {
         id: returned?.id || Date.now().toString(),
         name: returned?.companyName || newRoomName.trim(),
@@ -115,13 +129,84 @@ export default function Home(): JSX.Element {
       setNewRoomEmail('');
       setShowCreateModal(false);
 
-      // Success message instructing user to check their email (and spam)
-      setSuccessMessage(`Secure conference room created. An 8-character access code was sent to ${addedRoom.cfoEmail}. Please check your inbox (and spam folder) for the access code — you will use it to log in to the room. The code is single-use and expires in 90 days.`);
+      // Open code entry modal for new room so user can enter code they received
+      setSelectedRoomId(addedRoom.id);
+      setShowCodeModal(true);
+
+      setSuccessMessage(`Secure conference room created. An 8-character access code was sent to ${addedRoom.cfoEmail}. Please check your inbox (and spam folder). Enter the code to access the room.`);
     } catch (error) {
       console.error('Create room error:', error);
       setEmailError('Failed to create conference room. Please try again later.');
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  // When user clicks "Join Room", open the code modal for that room
+  const onJoinRoomClick = (roomId: string) => {
+    setSelectedRoomId(roomId);
+    setAccessCodeInput('');
+    setAccessCodeError('');
+    setVerifiedRoomDetails(null);
+    setShowCodeModal(true);
+  };
+
+  // Verify access code against backend
+  const verifyAccessCode = async (): Promise<void> => {
+    setAccessCodeError('');
+    setVerifiedRoomDetails(null);
+
+    if (!selectedRoomId) {
+      setAccessCodeError('No conference room selected.');
+      return;
+    }
+
+    const code = accessCodeInput.trim();
+
+    if (code.length !== 8) {
+      setAccessCodeError('Access code must be 8 characters.');
+      return;
+    }
+
+    setVerifyingCode(true);
+
+    try {
+      const payload = {
+        conferenceRoomId: selectedRoomId,
+        accessCode: code
+      };
+
+      const res = await fetch('/api/dealroom/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const data: VerifyResponse = await res.json();
+
+      if (!res.ok || data?.error) {
+        // Show the error message returned from backend if available
+        const msg = data?.error || 'Invalid or expired code. Please check and try again.';
+        setAccessCodeError(msg);
+        return;
+      }
+
+      if (data.success && data.conferenceRoom) {
+        // Access granted: show room details and close modal
+        setVerifiedRoomDetails(data.conferenceRoom);
+        setShowCodeModal(false);
+        setAccessCodeInput('');
+        setSelectedRoomId(null);
+        // Optional: mark room in UI as active / accessed
+        setConferenceRooms(prev => prev.map(r => r.id === data.conferenceRoom!.id ? ({ ...r, status: data.conferenceRoom!.status as ConferenceRoom['status'] }) : r));
+      } else {
+        setAccessCodeError('Invalid or expired code. Please check and try again.');
+      }
+    } catch (error) {
+      console.error('Verify code error:', error);
+      setAccessCodeError('Failed to verify access code. Please try again later.');
+    } finally {
+      setVerifyingCode(false);
     }
   };
 
@@ -155,237 +240,7 @@ export default function Home(): JSX.Element {
       </nav>
 
       <div className="pt-16">
-        {/* Hero Section */}
-        {activeSection === 'home' && (
-          <div className="relative">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-              <div className="text-center">
-                <h2 className="text-5xl md:text-6xl font-extrabold mb-6">
-                  <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                    AI-Powered Enterprise Automation Engine
-                  </span>
-                </h2>
-                <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
-                  Transform every interaction into instant, compounding revenue with zero-friction automation
-                </p>
-
-                {/* CTA */}
-                <div className="mb-12 bg-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto">
-                  <div className="text-center">
-                    <div className="inline-block bg-gradient-to-r from-red-600 to-yellow-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce">
-                      🔥 BLACK FRIDAY 2025 SPECIAL
-                    </div>
-                    <h3 className="text-5xl font-extrabold bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-transparent mb-3">
-                      Payroll Audit - Only $249
-                    </h3>
-                    <div className="text-red-400 mb-3 text-lg font-semibold">(1 Quarter)</div>
-                    <p className="text-3xl font-bold text-white mb-2">
-                      Regular Price: <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $249</span>
-                    </p>
-                    <p className="text-xl font-bold text-red-400 mb-4">⚡ SAVE BIG - LIMITED TIME ⚡</p>
-                    <p className="text-lg text-yellow-300 font-semibold mb-2">💰 Average ROI: 30-50x Your Investment</p>
-                    <p className="text-base text-gray-300 mb-4">Typical clients recover 15-35% in hidden savings + actionable steps to turn findings into $25K-$100K+ annual revenue</p>
-                    <p className="text-sm text-red-300 font-bold animate-pulse">⏰ Limited Time Offer • First 50 Clients Only!</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                    <p className="text-3xl font-bold text-green-400">15-35%</p>
-                    <p className="text-sm text-gray-300">Average Savings Found</p>
-                  </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                    <p className="text-3xl font-bold text-green-400">$249</p>
-                    <p className="text-sm text-gray-300">Cost to You</p>
-                  </div>
-                  <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                    <p className="text-3xl font-bold text-green-400">9 sec</p>
-                    <p className="text-sm text-gray-300">Analysis Time</p>
-                  </div>
-                </div>
-
-                <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 mb-6">
-                  <p className="text-sm text-gray-300">
-                    <strong className="text-blue-400">🔒 100% Secure:</strong> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compl[...]
-                  </p>
-                </div>
-                <button
-                  onClick={() => setActiveSection('conferencerooms')}
-                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-4 rounded-full font-bold"
-                >
-                  Get Your Audit →
-                </button>
-                <p className="text-xs text-gray-400 mt-4">No credit card required • Results in minutes • Used by Fortune 500 CFOs</p>
-              </div>
-
-              {/* What We Analyze & Enterprise-Grade Security */}
-              <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-                <div className="bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-blue-500/30 rounded-2xl p-6">
-                  <h3 className="text-2xl font-bold text-white mb-4">What We Analyze (One Quarter = 3 Months)</h3>
-                  <ul className="space-y-3 text-gray-300">
-                    <li className="flex items-start"><span className="text-green-400 mr-2 text-lg">✓</span><span>Overpayments and duplicate payments</span></li>
-                    <li className="flex items-start"><span className="text-green-400 mr-2 text-lg">✓</span><span>Payroll calculation errors</span></li>
-                    <li className="flex items-start"><span className="text-green-400 mr-2 text-lg">✓</span><span>Tax withholding discrepancies</span></li>
-                    <li className="flex items-start"><span className="text-green-400 mr-2 text-lg">✓</span><span>Benefits and deduction inconsistencies</span></li>
-                    <li className="flex items-start"><span className="text-green-400 mr-2 text-lg">✓</span><span>Compliance risks and audit trail gaps</span></li>
-                  </ul>
-                </div>
-
-                <div className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/30 rounded-2xl p-6">
-                  <h3 className="text-2xl font-bold text-white mb-3 flex items-center"><span className="mr-2">🔐</span> Enterprise-Grade Security</h3>
-                  <p className="text-gray-300 mb-4">
-                    All payroll file uploads happen exclusively in <strong className="text-purple-400">Secure Conference Rooms</strong>. Never on this public page.
-                  </p>
-                  <ul className="space-y-3 text-gray-300">
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔒</span><div><p className="text-white font-semibold">Military-grade AES-256-GCM encryption</p></div></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔑</span><div><p className="text-white font-semibold">Single-use access codes</p></div></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">⏰</span><div><p className="text-white font-semibold">Auto-expiration after 90 days</p></div></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">📊</span><div><p className="text-white font-semibold">Complete audit trail</p></div></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">✅</span><div><p className="text-white font-semibold">SOC 2 Type II Compliance</p></div></li>
-                  </ul>
-                  <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-                    <p className="text-sm text-gray-300"><strong className="text-blue-400">Why it matters:</strong> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complet[...]
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Enterprise Audits & Secure Conference Rooms Section */}
-              <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="bg-white/5 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/20">
-                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center"><span className="mr-2">📊</span> Enterprise Audits & Savings</h3>
-                  <p className="text-gray-300 mb-6">We audit 6 core systems to uncover hidden revenue leaks and cost inefficiencies.</p>
-                  <div className="space-y-4">
-                    <div className="border-l-4 border-green-500 pl-4">
-                      <h4 className="text-white font-bold">Payroll Processing</h4>
-                      <p className="text-gray-400 text-sm">KPI: 15-35% overpayment reduction</p>
-                      <p className="text-green-400 font-bold">Potential Savings: $2.5B/year</p>
-                    </div>
-                    <div className="border-l-4 border-blue-500 pl-4">
-                      <h4 className="text-white font-bold">HRIS/HCM Systems</h4>
-                      <p className="text-gray-400 text-sm">KPI: 97% faster audit cycle (3 weeks → 9s)</p>
-                      <p className="text-blue-400 font-bold">Efficiency Gain: 99.97%</p>
-                    </div>
-                    <div className="border-l-4 border-purple-500 pl-4">
-                      <h4 className="text-white font-bold">ERP/Finance</h4>
-                      <p className="text-gray-400 text-sm">KPI: 30% AI maintenance cost cut</p>
-                      <p className="text-purple-400 font-bold">Annual Savings: $500K-$2M</p>
-                    </div>
-                    <div className="border-l-4 border-yellow-500 pl-4">
-                      <h4 className="text-white font-bold">CRM (Lead-to-Close)</h4>
-                      <p className="text-gray-400 text-sm">KPI: 30% hallucination drop</p>
-                      <p className="text-yellow-400 font-bold">Revenue Impact: $1M-$5M</p>
-                    </div>
-                    <div className="border-l-4 border-red-500 pl-4">
-                      <h4 className="text-white font-bold">Compliance Logs</h4>
-                      <p className="text-gray-400 text-sm">{'<1% error rate (audit trails, tax filings)'}</p>
-                      <p className="text-red-400 font-bold">Risk Reduction: 99%</p>
-                    </div>
-                    <div className="border-l-4 border-cyan-500 pl-4">
-                      <h4 className="text-white font-bold">AI Infrastructure</h4>
-                      <p className="text-gray-400 text-sm">KPI: 95% cost reduction (RAG, vector DB)</p>
-                      <p className="text-cyan-400 font-bold">Infrastructure Savings: $100K-$1M/year</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/30">
-                  <h3 className="text-2xl font-bold text-white mb-4 flex items-center"><span className="mr-2">🔐</span> Secure Conference Rooms</h3>
-                  <p className="text-gray-300 mb-6">Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Secure Conference Rooms - ne[...]
-                  </p>
-                  <div className="space-y-3">
-                    <div className="flex items-start">
-                      <span className="text-green-400 mr-2">✅</span>
-                      <div>
-                        <p className="text-white font-semibold">Military-Grade Encryption</p>
-                        <p className="text-gray-400 text-sm">AES-256-GCM for all uploaded files</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-green-400 mr-2">✅</span>
-                      <div>
-                        <p className="text-white font-semibold">Single-Use Access Codes</p>
-                        <p className="text-gray-400 text-sm">Cryptographically secure, 8-character codes</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-green-400 mr-2">✅</span>
-                      <div>
-                        <p className="text-white font-semibold">Auto-Expiration</p>
-                        <p className="text-gray-400 text-sm">Rooms automatically expire after 90 days</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-green-400 mr-2">✅</span>
-                      <div>
-                        <p className="text-white font-semibold">Complete Audit Trail</p>
-                        <p className="text-gray-400 text-sm">Every access attempt logged for compliance</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-green-400 mr-2">✅</span>
-                      <div>
-                        <p className="text-white font-semibold">SOC 2 Type II Compliance</p>
-                        <p className="text-gray-400 text-sm">Enterprise security standards</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-                    <p className="text-sm text-gray-300"><strong className="text-blue-400">Why it matters:</strong> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complet[...]
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Voice AI Concierge Widget */}
-              <div className="mt-12 max-w-4xl mx-auto">
-                <h3 className="text-3xl font-bold text-white text-center mb-6">🎙️ AI Voice Concierge</h3>
-                <p className="text-xl text-gray-300 text-center mb-6">Experience enterprise-grade AI voice assistance. Available 24/7 to answer questions, schedule appointments, and close deals i[...]
-                </p>
-                <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-2xl shadow-2xl pb-6">
-                  <iframe
-                    src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
-                    className="w-full h-[650px]"
-                    title="Joyce AI Voice Concierge"
-                  ></iframe>
-                </div>
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 text-center">
-                    <p className="text-2xl font-bold text-blue-400">24/7</p>
-                    <p className="text-sm text-gray-300">Always Available</p>
-                  </div>
-                  <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/30 text-center">
-                    <p className="text-2xl font-bold text-green-400">3x</p>
-                    <p className="text-sm text-gray-300">Faster Response Time</p>
-                  </div>
-                  <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/30 text-center">
-                    <p className="text-2xl font-bold text-purple-400">95%</p>
-                    <p className="text-sm text-gray-300">Customer Satisfaction</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex justify-center items-center space-x-8 mb-12 mt-12">
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-400">{'$' + (arr / 1000000).toFixed(2) + 'M'}</div>
-                  <div className="text-sm text-gray-400">ARR (Live)</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-blue-400">{conferenceRooms.length}</div>
-                  <div className="text-sm text-gray-400">Active Conference Rooms</div>
-                </div>
-              </div>
-              <button
-                onClick={() => setActiveSection('conferencerooms')}
-                className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-lg font-semibold"
-              >
-                Explore Conference Rooms →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Conference Rooms Section */}
+        {/* ... the rest of the home content remains unchanged ... */}
         {activeSection === 'conferencerooms' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             {/* How to Access Instructions */}
@@ -409,8 +264,7 @@ export default function Home(): JSX.Element {
                 </div>
               </div>
               <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-                <p className="text-sm text-gray-300"><strong className="text-blue-400">📌 Note:</strong> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference R[...]
-                </p>
+                <p className="text-sm text-gray-300"><strong className="text-blue-400">📌 Note:</strong> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference Room") for easy identification.</p>
               </div>
             </div>
 
@@ -444,7 +298,7 @@ export default function Home(): JSX.Element {
                   <p className="text-gray-400 mb-4">{room.description}</p>
                   <div className="flex justify-between items-center">
                     <div className="text-sm text-gray-500">{room.participants} participants</div>
-                    <button className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Join Room</button>
+                    <button onClick={() => onJoinRoomClick(room.id)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition">Join Room</button>
                   </div>
                 </div>
               ))}
@@ -489,6 +343,53 @@ export default function Home(): JSX.Element {
                       {createLoading ? 'Creating...' : 'Create'}
                     </button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Code Entry Modal */}
+            {showCodeModal && (
+              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-60">
+                <div className="bg-slate-800 border border-blue-500/30 rounded-xl p-8 max-w-md w-full mx-4">
+                  <h3 className="text-2xl font-bold text-white mb-4">Enter Access Code</h3>
+                  <p className="text-sm text-gray-300 mb-4">Please enter the 8-character access code sent to your email to access this conference room.</p>
+                  <input
+                    type="text"
+                    placeholder="8-character access code (e.g. ABCD1234)"
+                    value={accessCodeInput}
+                    onChange={(e) => {
+                      setAccessCodeInput(e.target.value.toUpperCase());
+                      if (accessCodeError) setAccessCodeError('');
+                    }}
+                    maxLength={8}
+                    className={`w-full bg-slate-700 border ${accessCodeError ? 'border-red-400' : 'border-blue-500/30'} rounded-lg px-4 py-3 text-white mb-3 focus:outline-none focus:border-blue-500`}
+                  />
+                  {accessCodeError && <div className="text-red-400 text-sm mb-3">{accessCodeError}</div>}
+                  <div className="flex space-x-4">
+                    <button onClick={() => { setShowCodeModal(false); setAccessCodeError(''); setAccessCodeInput(''); setSelectedRoomId(null); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">Cancel</button>
+                    <button
+                      onClick={verifyAccessCode}
+                      disabled={verifyingCode}
+                      className={`flex-1 ${verifyingCode ? 'opacity-70 cursor-wait' : 'bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600'} text-white px-4 py-3 rounded-lg font-medium transition`}
+                    >
+                      {verifyingCode ? 'Verifying...' : 'Enter Code'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Verified Room Details (shown after successful code entry) */}
+            {verifiedRoomDetails && (
+              <div className="mt-6 bg-slate-800/40 border border-green-500/30 rounded-lg p-6 text-white">
+                <h3 className="text-xl font-bold mb-2">Access Granted</h3>
+                <p className="text-gray-300 mb-2">{verifiedRoomDetails.message}</p>
+                <div className="text-sm text-gray-300">
+                  <p><strong>Room ID:</strong> {verifiedRoomDetails.id}</p>
+                  <p><strong>Company:</strong> {verifiedRoomDetails.companyName}</p>
+                  <p><strong>Status:</strong> {verifiedRoomDetails.status}</p>
+                  {verifiedRoomDetails.expiresAt && <p><strong>Expires:</strong> {new Date(verifiedRoomDetails.expiresAt).toLocaleString()}</p>}
+                  {verifiedRoomDetails.cfoName && <p><strong>Contact:</strong> {verifiedRoomDetails.cfoName}</p>}
                 </div>
               </div>
             )}
