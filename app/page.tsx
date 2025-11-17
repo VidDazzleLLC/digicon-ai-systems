@@ -80,21 +80,31 @@ export default function Home() {
                 </p>
 
                 {/* FREE PAYROLL AUDIT CTA - Prominent on first page view */}
-                <div className="mb-12 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl">
-                  <div className="text-center">
-                    <div className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
-                      🎁 FREE SERVICE - LIMITED TIME
-                    </div>
-                    <h3 className="text-4xl font-extrabold text-white mb-2">
-                      Free Payroll Audit <span className="text-green-400">(One Quarter)</span>
-                    </h3>
-                    <p className="text-2xl font-bold text-yellow-400 mb-4">
-                      $2,500 Value - FREE for Limited Time
-                    </p>
-                    <p className="text-xl text-gray-200 mb-6">
-                      Analyze <span className="font-bold text-green-400">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="mb-12 bg-gradient-to-r from-red-900/40 to-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl shadow-red-500/50 animate-pulse">
+                <div className="text-center">
+                  <div className="inline-block bg-gradient-to-r from-red-600 to-yellow-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce">
+                    🔥 BLACK FRIDAY 2025 SPECIAL
+                  </div>
+                  <h3 className="text-5xl font-extrabold bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-transparent mb-3">
+                    Payroll Audit - Only $299 <span className="text-red-400">(3 Months)</span>
+                  </h3>
+                  <p className="text-3xl font-bold text-white mb-2">
+                    <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $299</span>
+                  </p>
+                  <p className="text-xl font-bold text-red-400 mb-4">
+                    ⚡ SAVE $2,201 - 88% OFF ⚡
+                  </p>
+                  <p className="text-lg text-yellow-300 font-semibold mb-2">
+                    💰 Average ROI: 30-50x Your Investment
+                  </p>
+                  <p className="text-base text-gray-300 mb-4">
+                    Typical clients recover 15-20% in hidden savings + actionable steps to turn findings into $25K-$100K+ annual revenue
+                  </p>
+                  <p className="text-sm text-red-300 font-bold animate-pulse">
+                    ⏰ Limited Time: Offer Ends November 30, 2025 | First 50 Clients Only!
+                  </p>
+                </div>
+              </div>                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                       <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
                         <p className="text-3xl font-bold text-green-400">15-20%</p>
                         <p className="text-sm text-gray-300">Average Savings Found</p>
