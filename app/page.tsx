@@ -82,7 +82,7 @@ export default function Home() {
               <div className="text-center">
                 <h2 className="text-5xl md:text-6xl font-extrabold mb-6">
                   <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-teal-400 bg-clip-text text-transparent">
-                    AI-Powered Enterprise Revenue Engine
+                    AI-Powered Enterprise Automation Engine
                   </span>
                 </h2>
                 <p className="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
@@ -90,16 +90,17 @@ export default function Home() {
                 </p>
 
                 {/* CTA */}
-                <div className="mb-12 bg-gradient-to-r from-red-900/40 to-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto">
+                <div className="mb-12 bg-black border-2 border-red-500 rounded-2xl p-8 max-w-4xl mx-auto">
                   <div className="text-center">
                     <div className="inline-block bg-gradient-to-r from-red-600 to-yellow-500 text-white px-6 py-3 rounded-full text-sm font-bold mb-4 animate-bounce">
                       🔥 BLACK FRIDAY 2025 SPECIAL
                     </div>
                     <h3 className="text-5xl font-extrabold bg-gradient-to-r from-yellow-400 via-red-500 to-yellow-400 bg-clip-text text-transparent mb-3">
-                      Payroll Audit - Only $249 <span className="text-red-400">(3 Months)</span>
+                      Payroll Audit - Only $249
                     </h3>
+                    <div className="text-red-400 mb-3 text-lg font-semibold">(1 Quarter)</div>
                     <p className="text-3xl font-bold text-white mb-2">
-                      <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $249</span>
+                      Regular Cost <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $249</span>
                     </p>
                     <p className="text-xl font-bold text-red-400 mb-4">
                       ⚡ SAVE BIG - LIMITED TIME ⚡
@@ -133,7 +134,7 @@ export default function Home() {
 
                 <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 mb-6">
                   <p className="text-sm text-gray-300">
-                    <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliant infrastructure.
+                    <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II[...]
                   </p>
                 </div>
                 <button
@@ -292,7 +293,7 @@ export default function Home() {
                   </div>
                   <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                     <p className="text-sm text-gray-300">
-                      <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. Your sensitive documents remain protected.
+                      <span className="font-bold text-blue-400">Why it matters:</span> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence. Your sensitive [...]
                     </p>
                   </div>
                 </div>
@@ -374,15 +375,14 @@ export default function Home() {
               </div>
               <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
                 <p className="text-sm text-gray-300">
-                  <span className="font-bold text-blue-400">📌 Note:</span> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference Room") for easy identification.
+                  <span className="font-bold text-blue-400">📌 Note:</span> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference Room") for easy identification[...]
                 </p>
               </div>
             </div>
 
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-4xl font-bold text-white">Your Conference Rooms</h2>
-              <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-semibold">
-                + Create New Conference Room
+              <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg [...]                + Create New Conference Room
               </button>
             </div>
 
@@ -432,7 +432,7 @@ export default function Home() {
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
-                    <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
+                    <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-[...]
                       Create
                     </button>
                   </div>
