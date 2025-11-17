@@ -108,7 +108,7 @@ export default function Home() {
                       💰 Average ROI: 30-50x Your Investment
                     </p>
                     <p className="text-base text-gray-300 mb-4">
-                      Typical clients recover 15-20% in hidden savings + actionable steps to turn findings into $25K-$100K+ annual revenue
+                      Typical clients recover 15-35% in hidden savings + actionable steps to turn findings into $25K-$100K+ annual revenue
                     </p>
                     <p className="text-sm text-red-300 font-bold animate-pulse">
                       ⏰ Limited Time Offer • First 50 Clients Only!
@@ -118,11 +118,11 @@ export default function Home() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                   <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                    <p className="text-3xl font-bold text-green-400">15-20%</p>
+                    <p className="text-3xl font-bold text-green-400">15-35%</p>
                     <p className="text-sm text-gray-300">Average Savings Found</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                    <p className="text-3xl font-bold text-green-400">$0</p>
+                    <p className="text-3xl font-bold text-green-400">$249</p>
                     <p className="text-sm text-gray-300">Cost to You</p>
                   </div>
                   <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
@@ -215,7 +215,7 @@ export default function Home() {
                   <div className="space-y-4">
                     <div className="border-l-4 border-green-500 pl-4">
                       <h4 className="text-white font-bold">Payroll Processing</h4>
-                      <p className="text-gray-400 text-sm">KPI: 15-20% overpayment reduction</p>
+                      <p className="text-gray-400 text-sm">KPI: 15-35% overpayment reduction</p>
                       <p className="text-green-400 font-bold">Potential Savings: $2.5B/year</p>
                     </div>
                     <div className="border-l-4 border-blue-500 pl-4">
