@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import nodemailer from 'nodemailer';
+import { addRoom } from '@/lib/conferenceRoomStorage';
 
 /**
  * Secure Conference Room Provisioning API
@@ -62,8 +63,6 @@ interface StoredRoom {
   accessCodeSent: boolean;
 }
 
-// Simple in-memory store (replace with Supabase/Prisma for production)
-const rooms = new Map<string, StoredRoom>();
 
 // Generate cryptographically secure 8-character access code
 function generateAccessCode(): string {
@@ -227,8 +226,7 @@ export async function POST(request: NextRequest) {
     };
 
     // Store room
-    rooms.set(roomId, room);
-
+addRoom(room);
     // Send access code email
     try {
       await sendAccessCodeEmail(cfoEmail, cfPName || '', companyName, accessCode, expiresAt);
