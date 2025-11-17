@@ -1,0 +1,241 @@
+// Code Execution Architecture Database Schema
+// Replaces traditional MCP with on-demand tool loading and agent learning
+//
+// Key Features:
+// - On-demand tool loading (not dumped in context)
+// - Agent learning through code snippet reuse
+// - Sandbox execution audit trail
+// - Cost tracking and optimization
+// - PII protection logging
+
+// Tool Categories - 5 main categories
+model ToolCategory {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  name        String   @unique  // "data", "api", "documents", "analytics", "automation"
+  description String
+  icon        String?  // Optional emoji or icon reference
+  
+  // Tools in this category
+  tools       Tool[]
+  
+  @@index([name])
+}
+
+// Tools - Individual tool definitions (loaded on-demand)
+model Tool {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Tool Metadata
+  name        String   @unique  // "CSV Parser", "Stripe Payment", etc.
+  description String   // What the tool does
+  version     String   @default("1.0.0")
+  
+  // Category
+  category         ToolCategory @relation(fields: [categoryId], references: [id])
+  categoryId       String
+  
+  // Code Implementation
+  codeTemplate     String   // Python/JS code template
+  language         String   // "python" or "javascript"
+  requiredPackages String[] // Dependencies needed
+  
+  // Usage Metadata
+  usageCount       Int      @default(0)
+  lastUsedAt       DateTime?
+  averageExecTime  Float?   // Average execution time in seconds
+  
+  // Security
+  requiresSandbox  Boolean  @default(true)
+  maxMemoryMB      Int      @default(512)
+  maxTimeoutSec    Int      @default(30)
+  
+  // Status
+  active           Boolean  @default(true)
+  deprecated       Boolean  @default(false)
+  
+  // Relationships
+  executions       SandboxExecution[]
+  
+  @@index([categoryId])
+  @@index([name])
+  @@index([active])
+}
+
+// Code Snippets - Agent learning system
+model CodeSnippet {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Snippet Metadata
+  name        String   @unique  // "payroll-duplicate-detector", "invoice-analyzer"
+  description String   // What this pattern does
+  category    String   // "data-processing", "analysis", "transformation"
+  
+  // Code
+  code        String   // Full code implementation
+  language    String   // "python" or "javascript"
+  
+  // Usage Tracking
+  usageCount  Int      @default(0)
+  successRate Float    @default(100.0)  // Percentage
+  lastUsedAt  DateTime?
+  
+  // Learning Metadata
+  learnedFrom String?  // Which execution it was learned from
+  tags        String[] // Searchable tags
+  
+  // Performance
+  avgExecTime Float?   // Average execution time
+  avgCost     Float?   // Average cost per execution
+  
+  @@index([name])
+  @@index([category])
+  @@index([tags])
+}
+
+// Sandbox Executions - Audit trail for all code executions
+model SandboxExecution {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Execution Context
+  executionId String   @unique  // Unique execution identifier
+  sessionId   String?  // Optional: Group related executions
+  
+  // Tool Reference (optional - may be ad-hoc code)
+  tool            Tool?   @relation(fields: [toolId], references: [id])
+  toolId          String?
+  
+  // Code Details
+  language    String   // "python" or "javascript"
+  codeHash    String   // SHA-256 hash of executed code
+  codeSize    Int      // Bytes
+  
+  // Input/Output (PII protected)
+  inputSize   Int      // Bytes
+  outputSize  Int      // Bytes
+  inputHash   String   // Hash for integrity
+  outputHash  String   // Hash for integrity
+  
+  // PII Protection
+  piiDetectedInput  Boolean @default(false)
+  piiDetectedOutput Boolean @default(false)
+  piiMasked         Boolean @default(false)
+  piiTypes          String[] // ["email", "ssn", "credit_card"]
+  
+  // Execution Results
+  status      ExecutionStatus
+  exitCode    Int?
+  errorMsg    String?
+  
+  // Performance
+  execTime    Float    // Execution time in seconds
+  memoryUsed  Float    // Memory used in MB
+  
+  // Cost Tracking
+  costTokens  Int      @default(0)  // Token cost for prompt
+  costDollars Float    @default(0.0) // Total cost in dollars
+  
+  // Resource Limits
+  maxMemoryMB Int      @default(512)
+  timeoutSec  Int      @default(30)
+  timedOut    Boolean  @default(false)
+  
+  // Security
+  sandboxId   String   // Isolated sandbox identifier
+  
+  // Agent Context (optional)
+  agentType   String?  // "claude", "gpt4", "gemini"
+  userId      String?  // User who initiated
+  
+  @@index([executionId])
+  @@index([sessionId])
+  @@index([toolId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([agentType])
+}
+
+enum ExecutionStatus {
+  QUEUED       // Execution queued
+  RUNNING      // Currently executing
+  SUCCESS      // Completed successfully
+  FAILED       // Execution failed
+  TIMEOUT      // Exceeded timeout limit
+  MEMORY_ERROR // Exceeded memory limit
+  CANCELLED    // Manually cancelled
+}
+
+// Gemini File Search Index - Track indexed files
+model GeminiFileIndex {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // File Metadata
+  fileName    String
+  fileType    String   // MIME type
+  fileSize    Int      // Bytes
+  filePath    String   // Original file path
+  
+  // Gemini Details
+  geminiFileId String  @unique  // Gemini's file identifier
+  indexStatus  String  @default("INDEXING")  // "INDEXING", "READY", "FAILED"
+  
+  // Usage Tracking
+  queryCount   Int     @default(0)
+  lastQueriedAt DateTime?
+  
+  // Expiration
+  expiresAt    DateTime?  // Gemini files may have expiration
+  
+  // Classification
+  category     String?  // "payroll", "hris", "erp", etc.
+  tags         String[] // Searchable tags
+  
+  @@index([geminiFileId])
+  @@index([indexStatus])
+  @@index([category])
+}
+
+// Cost Tracking Summary - Daily/Monthly cost aggregation
+model CostTracking {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  
+  // Time Period
+  date        DateTime @unique
+  period      String   // "daily", "monthly"
+  
+  // Execution Counts
+  totalExecutions     Int   @default(0)
+  successfulExecutions Int  @default(0)
+  failedExecutions    Int   @default(0)
+  
+  // Cost Metrics
+  totalCostDollars    Float @default(0.0)
+  avgCostPerExecution Float @default(0.0)
+  
+  // Token Usage
+  totalTokens         Int   @default(0)
+  promptTokens        Int   @default(0)
+  completionTokens    Int   @default(0)
+  cachedTokens        Int   @default(0)  // Gemini cached tokens
+  
+  // Performance
+  avgExecTime         Float @default(0.0)
+  totalExecTime       Float @default(0.0)
+  
+  // Comparisons (for reporting)
+  traditionalMCPCost  Float? // Estimated cost with traditional MCP
+  costSavingsPercent  Float? // Percentage saved
+  
+  @@index([date])
+  @@index([period])
+}
