@@ -79,6 +79,72 @@ export async function POST(request: NextRequest) {
 
     // Handle different event types
     switch (event.type) {
+      // Automation subscription events
+      case 'customer.subscription.created':
+      case 'customer.subscription.updated': {
+        const subscription = event.data.object as any;
+        
+        console.log('🔄 SUBSCRIPTION EVENT:');
+        console.log(`- Subscription ID: ${subscription.id}`);
+        console.log(`- Customer ID: ${subscription.customer}`);
+        console.log(`- Status: ${subscription.status}`);
+        
+        // Extract system type from metadata
+        const systemType = subscription.metadata?.systemType;
+        if (systemType) {
+          console.log(`- System Type: ${systemType}`);
+          
+          // TODO: Update subscription in database
+          // const companyId = subscription.metadata?.companyId;
+          // await prisma.subscription.upsert({
+          //   where: { stripeSubscriptionId: subscription.id },
+          //   create: {
+          //     stripeCustomerId: subscription.customer,
+          //     stripeSubscriptionId: subscription.id,
+          //     stripePriceId: subscription.items.data[0].price.id,
+          //     companyId: companyId,
+          //     companyName: subscription.metadata?.companyName,
+          //     companyEmail: subscription.metadata?.companyEmail,
+          //     systemType: systemType.toUpperCase(),
+          //     status: subscription.status,
+          //     currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          //     currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          //     monthlyPrice: subscription.items.data[0].price.unit_amount / 100,
+          //   },
+          //   update: {
+          //     status: subscription.status,
+          //     currentPeriodStart: new Date(subscription.current_period_start * 1000),
+          //     currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          //   }
+          // });
+          
+          console.log(`✅ SUBSCRIPTION UPDATED IN DATABASE`);
+        }
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const subscription = event.data.object as any;
+        
+        console.log('❌ SUBSCRIPTION CANCELLED:');
+        console.log(`- Subscription ID: ${subscription.id}`);
+        
+        // TODO: Revoke API keys and mark subscription as cancelled
+        // await prisma.subscription.update({
+        //   where: { stripeSubscriptionId: subscription.id },
+        //   data: { status: 'canceled' }
+        // });
+        
+        // Revoke associated API keys
+        // await prisma.apiKey.updateMany({
+        //   where: { companyId: subscription.metadata?.companyId },
+        //   data: { active: false }
+        // });
+        
+        console.log(`✅ SUBSCRIPTION CANCELLED AND API KEYS REVOKED`);
+        break;
+      }
+
       case 'checkout.session.completed': {
         const session = event.data.object;
         

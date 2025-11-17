@@ -32,3 +32,10 @@ yarn-error.log*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Compiled JS files (only commit .ts files)
+lib/**/*.js
+app/**/*.js
+!next.config.js
+!postcss.config.js
+!tailwind.config.js
