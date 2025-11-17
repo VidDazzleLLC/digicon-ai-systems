@@ -45,8 +45,7 @@ export default function Home() {
     setShowCreateModal(false);
   };
 
-  return (75
-          
+    return (          
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Navigation */}
       <nav className="fixed top-0 w-full bg-slate-900/80 backdrop-blur-lg border-b border-blue-500/20 z-50">
