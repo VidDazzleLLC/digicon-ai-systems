@@ -100,7 +100,7 @@ export default function Home() {
                     </h3>
                     <div className="text-red-400 mb-3 text-lg font-semibold">(1 Quarter)</div>
                     <p className="text-3xl font-bold text-white mb-2">
-                      Regular Cost <span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $249</span>
+                      Regular Price: span className="line-through text-gray-500">$2,500</span> <span className="text-yellow-400">→ $249</span>
                     </p>
                     <p className="text-xl font-bold text-red-400 mb-4">
                       ⚡ SAVE BIG - LIMITED TIME ⚡
