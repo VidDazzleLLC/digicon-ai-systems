@@ -1,5 +1,8 @@
 // Digicon AI Systems - Complete Database Schema
-// Includes Conference Room + Payroll Automation System
+// Includes:
+// 1. Conference Room System (secure document sharing)
+// 2. Tier 1 Automation System (6 audit systems with AI corrections)
+// 3. Dedicated Payroll Automation System
 
 generator client {
   provider = "prisma-client-js"
@@ -11,7 +14,7 @@ datasource db {
 }
 
 // ============================================================================
-// CONFERENCE ROOM MODELS (Existing)
+// CONFERENCE ROOM MODELS
 // ============================================================================
 
 model ConferenceRoom {
@@ -171,10 +174,191 @@ enum AuditEventType {
 }
 
 // ============================================================================
-// PAYROLL AUTOMATION SYSTEM MODELS (New)
+// TIER 1 AUTOMATION SYSTEM MODELS (6 Systems)
 // ============================================================================
 
+enum SystemType {
+  PAYROLL
+  HRIS
+  ERP
+  CRM
+  COMPLIANCE
+  AI_INFRASTRUCTURE
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  APPLIED
+}
+
+// API Keys for Tier 1 webhook authentication
 model ApiKey {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Key Information
+  keyHash         String       @unique  // Hashed API key
+  keyPrefix       String       // First 8 chars for identification
+  name            String       // Human-readable name
+  
+  // System Assignment
+  systemType      SystemType   @default(PAYROLL)
+  
+  // Company/Client Info
+  companyId       String       // Company identifier
+  companyName     String
+  companyEmail    String
+  
+  // Status & Security
+  active          Boolean      @default(true)
+  lastUsedAt      DateTime?
+  usageCount      Int          @default(0)
+  
+  // Rate Limiting
+  dailyLimit      Int          @default(1000)
+  dailyUsage      Int          @default(0)
+  lastResetAt     DateTime     @default(now())
+  
+  // Relationships
+  corrections     AutomationCorrection[]
+  logs            AutomationLog[]
+  
+  @@index([keyHash])
+  @@index([companyId])
+  @@index([systemType])
+  @@index([active])
+}
+
+// AI-generated corrections for all Tier 1 systems
+model AutomationCorrection {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // System Type
+  systemType      SystemType
+  
+  // Original Data
+  originalData    Json             // The data that was analyzed
+  recordId        String           // External record ID from client system
+  
+  // AI Analysis
+  issuesFound     String[]         // List of issues detected
+  aiReasoning     String           // Claude's explanation
+  confidence      Float            // 0.0 to 1.0
+  
+  // Corrections
+  correctedData   Json             // The corrected/optimized data
+  corrections     Json             // Detailed list of changes made
+  
+  // Status
+  status          CorrectionStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  appliedAt       DateTime?
+  
+  // Metadata
+  severity        String           // "low", "medium", "high", "critical"
+  category        String           // System-specific category
+  estimatedSavings Float?          // Dollar amount saved
+  
+  // Relationships
+  apiKey          ApiKey           @relation(fields: [apiKeyId], references: [id])
+  apiKeyId        String
+  
+  @@index([systemType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([apiKeyId])
+  @@index([recordId])
+}
+
+// Audit logs for Tier 1 automation activities
+model AutomationLog {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  
+  // Event Details
+  eventType       String       // "webhook_called", "correction_generated", "key_generated", etc.
+  systemType      SystemType
+  
+  // Request Info
+  ipAddress       String?
+  userAgent       String?
+  requestBody     Json?
+  
+  // Response Info
+  success         Boolean      @default(true)
+  errorMessage    String?
+  responseTime    Int?         // Milliseconds
+  
+  // Relationships
+  apiKey          ApiKey?      @relation(fields: [apiKeyId], references: [id])
+  apiKeyId        String?
+  
+  @@index([systemType])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([apiKeyId])
+}
+
+// Stripe subscription management for Tier 1
+model Subscription {
+  id                    String       @id @default(cuid())
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  
+  // Stripe Info
+  stripeCustomerId      String       @unique
+  stripeSubscriptionId  String       @unique
+  stripePriceId         String
+  
+  // Company Info
+  companyId             String       @unique
+  companyName           String
+  companyEmail          String
+  
+  // System Type (what they're subscribed to)
+  systemType            SystemType
+  
+  // Status
+  status                String       // "active", "canceled", "past_due", etc.
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean      @default(false)
+  
+  // Billing
+  monthlyPrice          Float
+  currency              String       @default("usd")
+  
+  @@index([companyId])
+  @@index([systemType])
+  @@index([status])
+}
+
+// ============================================================================
+// DEDICATED PAYROLL AUTOMATION SYSTEM MODELS
+// ============================================================================
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  SUSPENDED
+  EXPIRED
+}
+
+enum BillingStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIAL
+}
+
+// Dedicated API keys for standalone payroll service
+model PayrollApiKey {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -210,7 +394,7 @@ model ApiKey {
   
   // Relationships
   corrections     PayrollCorrection[]
-  automationLogs  AutomationLog[]
+  automationLogs  PayrollAutomationLog[]
   
   @@index([key])
   @@index([keyHash])
@@ -219,18 +403,10 @@ model ApiKey {
   @@index([customerEmail])
 }
 
-enum ApiKeyStatus {
-  ACTIVE
-  REVOKED
-  SUSPENDED
-  EXPIRED
-}
-
-enum BillingStatus {
-  ACTIVE
-  PAST_DUE
-  CANCELLED
-  TRIAL
+enum PayrollCorrectionStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
 }
 
 model PayrollCorrection {
@@ -240,7 +416,7 @@ model PayrollCorrection {
   
   // Request Details
   apiKeyId        String
-  apiKey          ApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  apiKey          PayrollApiKey   @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
   
   // Input Data
   inputData       Json     // Original payroll data submitted
@@ -261,7 +437,7 @@ model PayrollCorrection {
   issuesFound     Json?    // List of issues detected
   
   // Status
-  status          CorrectionStatus @default(PROCESSING)
+  status          PayrollCorrectionStatus @default(PROCESSING)
   errorMsg        String?
   
   @@index([apiKeyId])
@@ -269,22 +445,30 @@ model PayrollCorrection {
   @@index([status])
 }
 
-enum CorrectionStatus {
-  PROCESSING
-  COMPLETED
-  FAILED
+enum PayrollAutomationEventType {
+  API_KEY_GENERATED
+  API_KEY_VALIDATED
+  API_KEY_REVOKED
+  PAYROLL_WEBHOOK_RECEIVED
+  PAYROLL_CORRECTION_STARTED
+  PAYROLL_CORRECTION_COMPLETED
+  RATE_LIMIT_EXCEEDED
+  AUTHENTICATION_FAILED
+  STRIPE_PAYMENT_RECEIVED
+  SUBSCRIPTION_CREATED
+  SUBSCRIPTION_CANCELLED
 }
 
-model AutomationLog {
+model PayrollAutomationLog {
   id              String   @id @default(cuid())
   createdAt       DateTime @default(now())
   
   // Request Details
   apiKeyId        String?
-  apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  apiKey          PayrollApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
   
   // Event Details
-  eventType       AutomationEventType
+  eventType       PayrollAutomationEventType
   eventData       Json
   
   // Request Info
@@ -305,18 +489,13 @@ model AutomationLog {
   @@index([success])
 }
 
-enum AutomationEventType {
-  API_KEY_GENERATED
-  API_KEY_VALIDATED
-  API_KEY_REVOKED
-  PAYROLL_WEBHOOK_RECEIVED
-  PAYROLL_CORRECTION_STARTED
-  PAYROLL_CORRECTION_COMPLETED
-  RATE_LIMIT_EXCEEDED
-  AUTHENTICATION_FAILED
-  STRIPE_PAYMENT_RECEIVED
-  SUBSCRIPTION_CREATED
-  SUBSCRIPTION_CANCELLED
+enum SubscriptionStatus {
+  ACTIVE
+  TRIALING
+  PAST_DUE
+  CANCELLED
+  UNPAID
+  INCOMPLETE
 }
 
 model StripeCustomer {
@@ -353,13 +532,4 @@ model StripeCustomer {
   @@index([stripeCustomerId])
   @@index([email])
   @@index([subscriptionStatus])
-}
-
-enum SubscriptionStatus {
-  ACTIVE
-  TRIALING
-  PAST_DUE
-  CANCELLED
-  UNPAID
-  INCOMPLETE
 }
