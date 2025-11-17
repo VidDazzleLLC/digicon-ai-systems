@@ -8,6 +8,10 @@ interface ConferenceRoom {
   description: string;
   participants: number;
   status: 'active' | 'pending' | 'closed';
+  // optional fields returned from API
+  cfoEmail?: string;
+  expiresAt?: string;
+  accessCodeSent?: boolean;
 }
 
 export default function Home(): JSX.Element {
@@ -21,6 +25,10 @@ export default function Home(): JSX.Element {
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [newRoomName, setNewRoomName] = useState<string>('');
   const [newRoomDesc, setNewRoomDesc] = useState<string>('');
+  const [newRoomEmail, setNewRoomEmail] = useState<string>('');
+  const [emailError, setEmailError] = useState<string>('');
+  const [createLoading, setCreateLoading] = useState<boolean>(false);
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -29,19 +37,92 @@ export default function Home(): JSX.Element {
     return () => clearInterval(interval);
   }, []);
 
-  const createConferenceRoom = (): void => {
-    if (!newRoomName.trim()) return;
-    const newRoom: ConferenceRoom = {
-      id: Date.now().toString(),
-      name: newRoomName.trim(),
-      description: newRoomDesc.trim(),
-      participants: 1,
-      status: 'active'
-    };
-    setConferenceRooms(prev => [...prev, newRoom]);
-    setNewRoomName('');
-    setNewRoomDesc('');
-    setShowCreateModal(false);
+  // Email validation (simple but practical)
+  function validateEmail(email: string): boolean {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email.trim().toLowerCase());
+  }
+
+  const createConferenceRoom = async (): Promise<void> => {
+    // Clear prior messages
+    setSuccessMessage('');
+    setEmailError('');
+
+    if (!newRoomName.trim()) {
+      // minimal guard; you could show a validation UI for name as well
+      return;
+    }
+
+    if (!newRoomEmail.trim()) {
+      setEmailError('Please enter an email address.');
+      return;
+    }
+
+    if (!validateEmail(newRoomEmail)) {
+      setEmailError('Please enter a valid email address.');
+      return;
+    }
+
+    setCreateLoading(true);
+
+    try {
+      // Build the payload expected by the backend
+      const payload = {
+        companyName: newRoomName.trim(),
+        companyEmail: newRoomEmail.trim(), // use same email for company contact by default
+        cfoEmail: newRoomEmail.trim(),
+        cfoName: '', // optional
+        // send the description as notes so backend can consume it
+        notes: newRoomDesc.trim()
+      };
+
+      const res = await fetch('/api/dealroom/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data?.error) {
+        const errMsg = data?.error || data?.details || 'Failed to create conference room. Please try again.';
+        setEmailError(errMsg);
+        return;
+      }
+
+      // API returns conferenceRoom metadata (does NOT include the access code)
+      const returned = data.conferenceRoom;
+
+      // Map API fields into UI ConferenceRoom type
+      const addedRoom: ConferenceRoom = {
+        id: returned?.id || Date.now().toString(),
+        name: returned?.companyName || newRoomName.trim(),
+        description: newRoomDesc.trim(),
+        participants: 1,
+        status: returned?.status || 'active',
+        cfoEmail: returned?.cfoEmail,
+        expiresAt: returned?.expiresAt,
+        accessCodeSent: returned?.accessCodeSent
+      };
+
+      setConferenceRooms(prev => [addedRoom, ...prev]);
+
+      // Clear form
+      setNewRoomName('');
+      setNewRoomDesc('');
+      setNewRoomEmail('');
+      setShowCreateModal(false);
+
+      // Success message instructing user to check their email (and spam)
+      setSuccessMessage(`Secure conference room created. An 8-character access code was sent to ${addedRoom.cfoEmail}. Please check your inbox (and spam folder) for the access code — you will use it to log in to the room. The code is single-use and expires in 90 days.`);
+    } catch (error) {
+      console.error('Create room error:', error);
+      setEmailError('Failed to create conference room. Please try again later.');
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
   return (
@@ -125,7 +206,7 @@ export default function Home(): JSX.Element {
 
                 <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30 mb-6">
                   <p className="text-sm text-gray-300">
-                    <strong className="text-blue-400">🔒 100% Secure:</strong> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliance, and strict access controls.
+                    <strong className="text-blue-400">🔒 100% Secure:</strong> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compl[...]
                   </p>
                 </div>
                 <button
@@ -156,11 +237,16 @@ export default function Home(): JSX.Element {
                     All payroll file uploads happen exclusively in <strong className="text-purple-400">Secure Conference Rooms</strong>. Never on this public page.
                   </p>
                   <ul className="space-y-3 text-gray-300">
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔒</span><span>Military-grade AES-256-GCM encryption</span></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔑</span><span>Single-use access codes</span></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">⏰</span><span>Auto-expiration after 90 days</span></li>
-                    <li className="flex items-start"><span className="text-purple-400 mr-2">📊</span><span>Complete audit trail and SOC 2 Type II compliance</span></li>
+                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔒</span><div><p className="text-white font-semibold">Military-grade AES-256-GCM encryption</p></div></li>
+                    <li className="flex items-start"><span className="text-purple-400 mr-2">🔑</span><div><p className="text-white font-semibold">Single-use access codes</p></div></li>
+                    <li className="flex items-start"><span className="text-purple-400 mr-2">⏰</span><div><p className="text-white font-semibold">Auto-expiration after 90 days</p></div></li>
+                    <li className="flex items-start"><span className="text-purple-400 mr-2">📊</span><div><p className="text-white font-semibold">Complete audit trail</p></div></li>
+                    <li className="flex items-start"><span className="text-purple-400 mr-2">✅</span><div><p className="text-white font-semibold">SOC 2 Type II Compliance</p></div></li>
                   </ul>
+                  <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
+                    <p className="text-sm text-gray-300"><strong className="text-blue-400">Why it matters:</strong> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complet[...]
+                    </p>
+                  </div>
                 </div>
               </div>
 
@@ -205,7 +291,8 @@ export default function Home(): JSX.Element {
 
                 <div className="bg-gradient-to-br from-blue-900/30 to-purple-900/30 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/30">
                   <h3 className="text-2xl font-bold text-white mb-4 flex items-center"><span className="mr-2">🔐</span> Secure Conference Rooms</h3>
-                  <p className="text-gray-300 mb-6">Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Secure Conference Rooms - never on public pages.</p>
+                  <p className="text-gray-300 mb-6">Enterprise-grade security for sensitive data sharing. All payroll and financial file uploads happen exclusively in Secure Conference Rooms - ne[...]
+                  </p>
                   <div className="space-y-3">
                     <div className="flex items-start">
                       <span className="text-green-400 mr-2">✅</span>
@@ -244,7 +331,8 @@ export default function Home(): JSX.Element {
                     </div>
                   </div>
                   <div className="mt-6 bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-                    <p className="text-sm text-gray-300"><strong className="text-blue-400">Why it matters:</strong> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complete confidence.</p>
+                    <p className="text-sm text-gray-300"><strong className="text-blue-400">Why it matters:</strong> CFOs share payroll, financial, HRIS, ERP, CRM, and compliance data with complet[...]
+                    </p>
                   </div>
                 </div>
               </div>
@@ -252,7 +340,8 @@ export default function Home(): JSX.Element {
               {/* Voice AI Concierge Widget */}
               <div className="mt-12 max-w-4xl mx-auto">
                 <h3 className="text-3xl font-bold text-white text-center mb-6">🎙️ AI Voice Concierge</h3>
-                <p className="text-xl text-gray-300 text-center mb-6">Experience enterprise-grade AI voice assistance. Available 24/7 to answer questions, schedule appointments, and close deals instantly.</p>
+                <p className="text-xl text-gray-300 text-center mb-6">Experience enterprise-grade AI voice assistance. Available 24/7 to answer questions, schedule appointments, and close deals i[...]
+                </p>
                 <div className="bg-slate-800/50 backdrop-blur-lg border border-blue-500/20 rounded-2xl shadow-2xl pb-6">
                   <iframe
                     src="https://voiceagents.tech/widget/v2/8b28518f-ba4f-4083-b282-8dbd0a00c7ab/1758814938820x190350333809891300"
@@ -320,7 +409,8 @@ export default function Home(): JSX.Element {
                 </div>
               </div>
               <div className="bg-blue-500/10 rounded-lg p-4 border border-blue-500/30">
-                <p className="text-sm text-gray-300"><strong className="text-blue-400">📌 Note:</strong> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference Room") for easy identification.</p>
+                <p className="text-sm text-gray-300"><strong className="text-blue-400">📌 Note:</strong> Each conference room is named after your company (e.g., "Acme Corp - Secure Conference R[...]
+                </p>
               </div>
             </div>
 
@@ -330,6 +420,13 @@ export default function Home(): JSX.Element {
                 Create New Conference Room
               </button>
             </div>
+
+            {/* Success message area */}
+            {successMessage && (
+              <div className="mb-6 bg-green-700/20 border border-green-500/30 rounded-lg p-4 text-green-200">
+                {successMessage}
+              </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {conferenceRooms.map((room) => (
@@ -365,6 +462,17 @@ export default function Home(): JSX.Element {
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
+                  <input
+                    type="email"
+                    placeholder="Your email (we'll send the access code here)"
+                    value={newRoomEmail}
+                    onChange={(e) => {
+                      setNewRoomEmail(e.target.value);
+                      if (emailError) setEmailError('');
+                    }}
+                    className={`w-full bg-slate-700 border ${emailError ? 'border-red-400' : 'border-blue-500/30'} rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500`}
+                  />
+                  {emailError && <div className="text-red-400 text-sm mb-3">{emailError}</div>}
                   <textarea
                     placeholder="Description"
                     value={newRoomDesc}
@@ -372,8 +480,14 @@ export default function Home(): JSX.Element {
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 h-24 focus:outline-none focus:border-blue-500"
                   />
                   <div className="flex space-x-4">
-                    <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">Cancel</button>
-                    <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">Create</button>
+                    <button onClick={() => { setShowCreateModal(false); setEmailError(''); }} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">Cancel</button>
+                    <button
+                      onClick={createConferenceRoom}
+                      disabled={createLoading}
+                      className={`flex-1 ${createLoading ? 'opacity-70 cursor-wait' : 'bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600'} text-white px-4 py-3 rounded-lg font-medium transition`}
+                    >
+                      {createLoading ? 'Creating...' : 'Create'}
+                    </button>
                   </div>
                 </div>
               </div>
