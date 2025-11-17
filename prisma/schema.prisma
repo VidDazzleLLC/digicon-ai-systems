@@ -1,0 +1,181 @@
+// Tier 1 Automation System Database Schema
+// AI-powered correction system for 6 audit systems
+//
+// Systems Covered:
+// 1. Payroll - overtime, taxes, duplicate payments
+// 2. HRIS - employee data, benefits, PTO tracking
+// 3. ERP - inventory, procurement, workflow
+// 4. CRM - leads, pipeline, follow-ups
+// 5. Compliance - policies, regulations, risks
+// 6. AI Infrastructure - costs, performance, APIs
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SystemType {
+  PAYROLL
+  HRIS
+  ERP
+  CRM
+  COMPLIANCE
+  AI_INFRASTRUCTURE
+}
+
+enum CorrectionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  APPLIED
+}
+
+// API Keys for webhook authentication
+model ApiKey {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  
+  // Key Information
+  keyHash         String       @unique  // Hashed API key
+  keyPrefix       String       // First 8 chars for identification (e.g., "sk_live_")
+  name            String       // Human-readable name
+  
+  // System Assignment
+  systemType      SystemType   @default(PAYROLL)
+  
+  // Company/Client Info
+  companyId       String       // Company identifier
+  companyName     String
+  companyEmail    String
+  
+  // Status & Security
+  active          Boolean      @default(true)
+  lastUsedAt      DateTime?
+  usageCount      Int          @default(0)
+  
+  // Rate Limiting
+  dailyLimit      Int          @default(1000)
+  dailyUsage      Int          @default(0)
+  lastResetAt     DateTime     @default(now())
+  
+  // Relationships
+  corrections     AutomationCorrection[]
+  logs            AutomationLog[]
+  
+  @@index([keyHash])
+  @@index([companyId])
+  @@index([systemType])
+  @@index([active])
+}
+
+// AI-generated corrections for all systems
+model AutomationCorrection {
+  id              String           @id @default(cuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // System Type
+  systemType      SystemType
+  
+  // Original Data
+  originalData    Json             // The data that was analyzed
+  recordId        String           // External record ID from client system
+  
+  // AI Analysis
+  issuesFound     String[]         // List of issues detected
+  aiReasoning     String           // Claude's explanation
+  confidence      Float            // 0.0 to 1.0
+  
+  // Corrections
+  correctedData   Json             // The corrected/optimized data
+  corrections     Json             // Detailed list of changes made
+  
+  // Status
+  status          CorrectionStatus @default(PENDING)
+  reviewedAt      DateTime?
+  reviewedBy      String?
+  appliedAt       DateTime?
+  
+  // Metadata
+  severity        String           // "low", "medium", "high", "critical"
+  category        String           // System-specific category
+  estimatedSavings Float?          // Dollar amount saved
+  
+  // Relationships
+  apiKey          ApiKey           @relation(fields: [apiKeyId], references: [id])
+  apiKeyId        String
+  
+  @@index([systemType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([apiKeyId])
+  @@index([recordId])
+}
+
+// Audit logs for all automation activities
+model AutomationLog {
+  id              String       @id @default(cuid())
+  createdAt       DateTime     @default(now())
+  
+  // Event Details
+  eventType       String       // "webhook_called", "correction_generated", "key_generated", etc.
+  systemType      SystemType
+  
+  // Request Info
+  ipAddress       String?
+  userAgent       String?
+  requestBody     Json?
+  
+  // Response Info
+  success         Boolean      @default(true)
+  errorMessage    String?
+  responseTime    Int?         // Milliseconds
+  
+  // Relationships
+  apiKey          ApiKey?      @relation(fields: [apiKeyId], references: [id])
+  apiKeyId        String?
+  
+  @@index([systemType])
+  @@index([eventType])
+  @@index([createdAt])
+  @@index([apiKeyId])
+}
+
+// Stripe subscription management
+model Subscription {
+  id                    String       @id @default(cuid())
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  
+  // Stripe Info
+  stripeCustomerId      String       @unique
+  stripeSubscriptionId  String       @unique
+  stripePriceId         String
+  
+  // Company Info
+  companyId             String       @unique
+  companyName           String
+  companyEmail          String
+  
+  // System Type (what they're subscribed to)
+  systemType            SystemType
+  
+  // Status
+  status                String       // "active", "canceled", "past_due", etc.
+  currentPeriodStart    DateTime
+  currentPeriodEnd      DateTime
+  cancelAtPeriodEnd     Boolean      @default(false)
+  
+  // Billing
+  monthlyPrice          Float
+  currency              String       @default("usd")
+  
+  @@index([companyId])
+  @@index([systemType])
+  @@index([status])
+}
