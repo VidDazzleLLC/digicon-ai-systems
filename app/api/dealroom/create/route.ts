@@ -265,7 +265,7 @@ export async function POST(request: NextRequest) {
 }
 
 // Helper function to verify access code (for /api/dealroom/verify)
-export async function verifyAccessCode(code: string, roomId: string): Promise<boolean> {
+async function verifyAccessCode(code: string, roomId: string): Promise<boolean> {
   const room = rooms.get(roomId);
   if (!room) return false;
   
