@@ -440,7 +440,6 @@ export default function Home() {
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
-                  />
                   <div className="flex space-x-4">
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
