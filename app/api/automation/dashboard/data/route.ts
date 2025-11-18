@@ -37,6 +37,30 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       );
     }
+
+  // Re-fetch the API key record with the fields we need (to satisfy TypeScript
+  // and ensure fields like status, billingStatus, createdAt, usage counters exist)
+  const apiKeyFull = await prisma.apiKey.findUnique({
+    where: { id: apiKeyRecord.id },
+    select: {
+      id: true,
+      companyName: true,
+      status: true,
+      billingStatus: true,
+      createdAt: true,
+      requestsToday: true,
+      requestsPerDay: true,
+      totalRequests: true,
+      lastUsedAt: true,
+    }
+  });
+
+  if (!apiKeyFull) {
+    return NextResponse.json(
+      { error: 'API key not found' },
+      { status: 404 }
+    );
+  }
     
     // Get corrections
     const corrections = await prisma.payrollCorrection.findMany({
@@ -87,16 +111,16 @@ export async function GET(request: NextRequest) {
     // Build response
     const dashboardData = {
       apiKey: {
-        id: apiKeyRecord.id,
-        companyName: apiKeyRecord.companyName,
-        status: apiKeyRecord.status,
-        billingStatus: apiKeyRecord.billingStatus,
-        createdAt: apiKeyRecord.createdAt,
+        id: apiKeyFull.id,
+        companyName: apiKeyFull.companyName,
+        status: apiKeyFull.status,
+        billingStatus: apiKeyFull.billingStatus,
+        createdAt: apiKeyFull.createdAt,
       },
       usage: {
-        requestsToday: apiKeyRecord.requestsToday,
-        requestsPerDay: apiKeyRecord.requestsPerDay,
-        totalRequests: apiKeyRecord.totalRequests,
+        requestsToday: apiKeyFull.requestsToday,
+        requestsPerDay: apiKeyFull.requestsPerDay,
+        totalRequests: apiKeyFull.totalRequests,
         lastUsedAt: apiKeyRecord.lastUsedAt,
         percentUsed: (apiKeyRecord.requestsToday / apiKeyRecord.requestsPerDay * 100).toFixed(1),
       },
