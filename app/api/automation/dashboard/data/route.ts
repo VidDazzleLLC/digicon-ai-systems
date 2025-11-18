@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { validateApiKey } from '@/lib/automation/api-keys';
+import { ApiKey } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -40,9 +41,9 @@ export async function GET(request: NextRequest) {
 
   // Re-fetch the API key record with the fields we need (to satisfy TypeScript
   // and ensure fields like status, billingStatus, createdAt, usage counters exist)
-  const apiKeyFull = await prisma.apiKey.findUnique({
+  const apiKeyFull = ( await prisma.apiKey.findUnique({
     where: { id: apiKeyRecord.id },
-      });
+      })) as ApiKey | null;
 43
     
   if (!apiKeyFull) {
