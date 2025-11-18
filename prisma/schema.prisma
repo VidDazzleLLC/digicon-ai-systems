@@ -211,6 +211,7 @@ model ApiKey {
   // Relationships
   corrections     PayrollCorrection[]
   automationLogs  AutomationLog[]
+  fileUploads     FileUpload[]
   
   @@index([key])
   @@index([keyHash])
@@ -362,4 +363,50 @@ enum SubscriptionStatus {
   CANCELLED
   UNPAID
   INCOMPLETE
+}
+
+model FileUpload {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // File Metadata
+  fileId          String   @unique  // MissionX file ID
+  fileName        String
+  fileUrl         String
+  fileSize        Int?
+  
+  // Customer Information
+  customerId      String   // Stripe customer ID
+  customerEmail   String
+  companyName     String
+  
+  // Processing Status
+  status          FileUploadStatus @default(PROCESSING)
+  issuesFound     Int      @default(0)
+  correctionsMade Int      @default(0)
+  
+  // Processing Details
+  recordsProcessed Int?
+  processingTime   Int?    // Milliseconds
+  errorMsg         String?
+  
+  // AI Processing Results
+  corrections      Json?
+  issues           Json?
+  
+  // Relationships
+  apiKeyId         String?
+  apiKey           ApiKey? @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  
+  @@index([fileId])
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum FileUploadStatus {
+  PROCESSING
+  COMPLETED
+  FAILED
 }
