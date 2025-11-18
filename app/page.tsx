@@ -21,8 +21,6 @@ export default function Home() {
   ]);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
-  const [newRoomDesc, setNewRoomDesc] = useState('');
-    const [cfoName, setCfoName] = useState('');
     const [cfoEmail, setCfoEmail] = useState('');
 
   useEffect(() => {
@@ -64,8 +62,6 @@ export default function Home() {
         
         // Clear form fields
         setNewRoomName('');
-        setNewRoomDesc('');
-        setCfoName('');
         setCfoEmail('');
         setShowCreateModal(false);
       } else {
@@ -441,27 +437,16 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
                   <input
                     type="text"
-                    placeholder="Room Name"
+                    placeholder="Company Name"
                     value={newRoomName}
                     onChange={(e) => setNewRoomName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
-                  <textarea
-                    placeholder="Description"
-                    value={newRoomDesc}
-                    onChange={(e) => setNewRoomDesc(e.target.value)}
-                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 h-24 focus:outline-none focus:border-blue-500"
                   />
                   <div className="flex space-x-4">
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
-                                  <input
-                                                    placeholder="Your Name (optional)"
-                                                    value={cfoName}
-                                                    onChange={(e) => setCfoName(e.target.value)}
-                                                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
-                                                  />
                                   <input
                                                     type="email"
                                                     placeholder="Your Email (required to receive access code)"
