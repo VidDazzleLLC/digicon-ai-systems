@@ -29,8 +29,7 @@ export async function getDashboardData(
     // Get company's API keys for this system
     const apiKeys = await prisma.apiKey.findMany({
       where: {
-        companyId,
-        systemType: systemType.toUpperCase() as any,
+        customerId: companyId,
       },
     });
 
@@ -51,35 +50,25 @@ export async function getDashboardData(
     const apiKeyIds = apiKeys.map(k => k.id);
 
     // Get corrections
-    const corrections = await prisma.automationCorrection.findMany({
+    const corrections = await prisma.payrollCorrection.findMany({
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,
       include: {
-        apiKey: {
-          select: {
-            name: true,
-            keyPrefix: true,
-          },
-        },
+        apiKey: true,
       },
     });
 
     // Get statistics
-    const stats = await prisma.automationCorrection.groupBy({
+    const stats = await prisma.payrollCorrection.groupBy({
       by: ['status'],
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       _count: true,
-      _sum: {
-        estimatedSavings: true,
-      },
     });
 
     const statsMap = {
@@ -96,14 +85,12 @@ export async function getDashboardData(
       if (status in statsMap) {
         statsMap[status as keyof typeof statsMap] = s._count;
       }
-      statsMap.totalSavings += s._sum.estimatedSavings || 0;
     });
 
     // Get recent activity logs
     const recentLogs = await prisma.automationLog.findMany({
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -114,12 +101,11 @@ export async function getDashboardData(
       stats: statsMap,
       apiKeys: apiKeys.map(k => ({
         id: k.id,
-        name: k.name,
-        keyPrefix: k.keyPrefix,
-        active: k.active,
-        usageCount: k.usageCount,
-        dailyUsage: k.dailyUsage,
-        dailyLimit: k.dailyLimit,
+        companyName: k.companyName,
+        status: k.status,
+        requestsToday: k.requestsToday,
+        requestsPerDay: k.requestsPerDay,
+        totalRequests: k.totalRequests,
         lastUsedAt: k.lastUsedAt,
       })),
       recentLogs,

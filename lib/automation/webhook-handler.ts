@@ -73,21 +73,17 @@ export async function handleWebhook(
     const responseTime = Date.now() - startTime;
 
     // Save correction to database
-    const savedCorrection = await prisma.automationCorrection.create({
+    const savedCorrection = await prisma.payrollCorrection.create({
       data: {
-        systemType: systemType.toUpperCase() as any,
-        originalData: payload.data,
-        recordId: payload.recordId,
+        inputData: payload.data,
+        employeeId: payload.recordId,
         issuesFound: correction.issuesFound,
-        aiReasoning: correction.aiReasoning,
-        confidence: correction.confidence,
-        correctedData: correction.correctedData,
-        corrections: correction.corrections,
-        severity: correction.severity,
-        category: correction.category,
-        estimatedSavings: correction.estimatedSavings,
+        outputData: correction.correctedData,
+        correctionCount: correction.corrections?.length || 0,
+        correctionsFound: correction.issuesFound.length > 0,
         apiKeyId: apiKey.id,
-        status: 'PENDING',
+        status: 'PROCESSING',
+        processingTime: responseTime,
       },
     });
 
@@ -145,12 +141,15 @@ async function logWebhookCall(
   try {
     await prisma.automationLog.create({
       data: {
-        eventType: 'webhook_called',
-        systemType: systemType.toUpperCase() as any,
+        eventType: 'PAYROLL_WEBHOOK_RECEIVED',
+        eventData: requestBody || {},
+        endpoint: '/api/automation/webhook',
+        method: 'POST',
+        ipAddress: 'unknown',
+        statusCode: success ? 200 : 500,
         success,
-        errorMessage: errorMessage || null,
+        errorMsg: errorMessage || null,
         responseTime,
-        requestBody: requestBody || null,
         apiKeyId,
       },
     });
