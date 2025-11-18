@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient, type ApiKey } from '@prisma/client';
 import { validateApiKey } from '@/lib/automation/api-keys';
+import { ApiKey } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
