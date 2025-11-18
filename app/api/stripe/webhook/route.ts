@@ -140,7 +140,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const subscriptionId = session.subscription as string;
 
   // Check if API key already exists for this customer
-  const existingKey = await prisma.apiKey.findFirst({
+  const existingKey = await prisma.payrollApiKey.findFirst({
     where: {
       customerEmail,
       status: 'ACTIVE',
@@ -263,7 +263,7 @@ async function handleSubscriptionUpdated(subscription: any) {
       : subscription.status === 'canceled' ? 'CANCELLED'
       : 'ACTIVE';
 
-    await prisma.apiKey.update({
+    await prisma.payrollApiKey.update({
       where: { id: stripeCustomer.apiKeyId },
       data: { billingStatus: billingStatus as any },
     });
@@ -287,7 +287,7 @@ async function handleSubscriptionDeleted(subscription: any) {
   });
 
   if (stripeCustomer?.apiKeyId) {
-    const apiKey = await prisma.apiKey.findUnique({
+    const apiKey = await prisma.payrollApiKey.findUnique({
       where: { id: stripeCustomer.apiKeyId },
     });
 
@@ -323,7 +323,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   });
 
   if (stripeCustomer?.apiKeyId) {
-    await prisma.apiKey.update({
+    await prisma.payrollApiKey.update({
       where: { id: stripeCustomer.apiKeyId },
       data: { billingStatus: 'PAST_DUE' },
     });
@@ -347,7 +347,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   });
 
   if (stripeCustomer?.apiKeyId) {
-    await prisma.apiKey.update({
+    await prisma.payrollApiKey.update({
       where: { id: stripeCustomer.apiKeyId },
       data: { billingStatus: 'ACTIVE' },
     });

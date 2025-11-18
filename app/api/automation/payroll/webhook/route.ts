@@ -331,7 +331,7 @@ async function logAutomationEvent(params: {
   errorMsg?: string;
 }) {
   try {
-    await prisma.automationLog.create({
+    await prisma.payrollAutomationLog.create({
       data: {
         apiKeyId: params.apiKeyId,
         eventType: params.eventType as any,

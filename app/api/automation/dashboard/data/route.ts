@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     });
     
     // Get automation logs
-    const logs = await prisma.automationLog.findMany({
+    const logs = await prisma.payrollAutomationLog.findMany({
       where: { apiKeyId: apiKeyRecord.id },
       orderBy: { createdAt: 'desc' },
       take: 100,

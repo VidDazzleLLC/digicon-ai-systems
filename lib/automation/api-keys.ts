@@ -48,8 +48,8 @@ export async function generateApiKey(params: {
     // Generate unique customer ID
     const customerId = `cust_${generateSecureRandom(16)}`;
     
-    // Create API key record
-    const apiKeyRecord = await prisma.apiKey.create({
+    // Create API key record using PayrollApiKey model
+    const apiKeyRecord = await prisma.payrollApiKey.create({
       data: {
         key: apiKey,
         keyHash: keyHash,
@@ -105,7 +105,7 @@ export async function validateApiKey(apiKey: string) {
     const keyHash = sha256Hash(apiKey);
     
     // Find API key record
-    const apiKeyRecord = await prisma.apiKey.findUnique({
+    const apiKeyRecord = await prisma.payrollApiKey.findUnique({
       where: { keyHash },
     });
     
@@ -133,7 +133,7 @@ export async function validateApiKey(apiKey: string) {
     
     // Reset counter if more than 24 hours have passed
     if (hoursSinceReset >= 24) {
-      await prisma.apiKey.update({
+      await prisma.payrollApiKey.update({
         where: { id: apiKeyRecord.id },
         data: {
           requestsToday: 0,
@@ -167,7 +167,7 @@ export async function validateApiKey(apiKey: string) {
  */
 export async function incrementApiKeyUsage(apiKeyId: string) {
   try {
-    await prisma.apiKey.update({
+    await prisma.payrollApiKey.update({
       where: { id: apiKeyId },
       data: {
         requestsToday: { increment: 1 },
@@ -194,7 +194,7 @@ export async function revokeApiKey(apiKeyOrHash: string, reason: string = 'USER_
       : apiKeyOrHash;
     
     // Update API key status
-    const updated = await prisma.apiKey.update({
+    const updated = await prisma.payrollApiKey.update({
       where: { keyHash },
       data: {
         status: 'REVOKED',
@@ -221,7 +221,7 @@ export async function revokeApiKey(apiKeyOrHash: string, reason: string = 'USER_
  */
 export async function getApiKeyStats(apiKeyId: string) {
   try {
-    const apiKey = await prisma.apiKey.findUnique({
+    const apiKey = await prisma.payrollApiKey.findUnique({
       where: { id: apiKeyId },
       include: {
         corrections: {
@@ -295,7 +295,7 @@ export async function getApiKeyStats(apiKeyId: string) {
  */
 export async function listApiKeys(customerEmail: string) {
   try {
-    const apiKeys = await prisma.apiKey.findMany({
+    const apiKeys = await prisma.payrollApiKey.findMany({
       where: { customerEmail },
       orderBy: { createdAt: 'desc' },
     });

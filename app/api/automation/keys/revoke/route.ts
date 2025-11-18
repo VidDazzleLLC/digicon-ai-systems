@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     const revokedKey = await revokeApiKey(apiKey, reason || 'USER_REQUESTED');
     
     // Log event
-    await prisma.automationLog.create({
+    await prisma.payrollAutomationLog.create({
       data: {
         apiKeyId: revokedKey.id,
         eventType: 'API_KEY_REVOKED',
