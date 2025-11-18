@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
   // and ensure fields like status, billingStatus, createdAt, usage counters exist)
   const apiKeyFull = await prisma.apiKey.findUnique({
     where: { id: apiKeyRecord.id },
-    }
+    });
 
   if (!apiKeyFull) {
     return NextResponse.json(
