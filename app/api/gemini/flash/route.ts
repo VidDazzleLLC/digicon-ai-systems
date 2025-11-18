@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { executeGeminiFlash } from ./../src/gemini/flashExecutor';
+import { executeGeminiFlash } from ./../../../src/gemini/flashExecutor';
   import { GeminiContextManager } from '../src/gemini/contextManager';
 import { MCPContext } from '../src/mcp/types';
 const contextManager = new GeminiContextManager();
