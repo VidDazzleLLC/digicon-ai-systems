@@ -1,4 +1,4 @@
-import vm from 'vm';
+import * as vm from 'vm';
 import { MCPContext } from '../types';
 
 export type SandboxExecuteOptions = {
@@ -14,7 +14,7 @@ export async function executeInSandbox(
   const timeout = options.timeoutMs ?? 1000;
   const sandbox: Record<string, any> = {
     console: {
-      log: (..._args: any[]) {
+      log: (..._args: any[]) => {
         /* optional capture */
       },
     },
@@ -27,7 +27,8 @@ export async function executeInSandbox(
   try {
     const result = await script.runInNewContext(sandbox, { timeout });
     return result;
-  } catch (err: any) {
-    throw new Error(`Sandbox execution error: ${err?.message ?? String(err)}`);
+  } catch (err) {
+    const message = err && (err as any).message ? (err as any).message : String(err);
+    throw new Error(`Sandbox execution error: ${message}`);
   }
 }
