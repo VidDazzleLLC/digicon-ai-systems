@@ -3,6 +3,12 @@
  * Receives file upload notifications from MissionX portals
  * Downloads files, processes payroll data, stores results, sends notifications
  * 
+ * Security Features:
+ * - HMAC SHA256 signature verification
+ * - File size limits (10MB max)
+ * - Record count limits (1000 max)
+ * - Trusted source validation (Stripe customer lookup)
+ * 
  * POST /api/missionx/webhook
  * 
  * Headers:
