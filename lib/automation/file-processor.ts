@@ -52,6 +52,12 @@ export async function processPayrollFile(params: ProcessParams) {
 
     console.log(`✅ Downloaded ${(fileSize / 1024).toFixed(2)} KB`);
 
+    // Validate file size (max 10MB to mitigate ReDoS in xlsx parser)
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (fileSize > MAX_FILE_SIZE) {
+      throw new Error(`File too large: ${(fileSize / 1024 / 1024).toFixed(2)}MB (max 10MB)`);
+    }
+
     // 2. Parse based on extension
     const ext = params.fileName.split('.').pop()?.toLowerCase();
     let payrollData: PayrollData[];
@@ -65,6 +71,14 @@ export async function processPayrollFile(params: ProcessParams) {
     }
 
     console.log(`✅ Parsed ${payrollData.length} records`);
+
+    // Validate record count
+    if (payrollData.length === 0) {
+      throw new Error('No data found in file');
+    }
+    if (payrollData.length > 1000) {
+      throw new Error(`Too many records: ${payrollData.length} (max 1000)`);
+    }
 
     // 3. Run AI correction
     if (!params.apiKeyId) {
