@@ -73,21 +73,18 @@ export async function handleWebhook(
     const responseTime = Date.now() - startTime;
 
     // Save correction to database
-    const savedCorrection = await prisma.automationCorrection.create({
+    const savedCorrection = await prisma.payrollCorrection.create({
       data: {
-        systemType: systemType.toUpperCase() as any,
-        originalData: payload.data,
-        recordId: payload.recordId,
-        issuesFound: correction.issuesFound,
-        aiReasoning: correction.aiReasoning,
-        confidence: correction.confidence,
-        correctedData: correction.correctedData,
-        corrections: correction.corrections,
-        severity: correction.severity,
-        category: correction.category,
-        estimatedSavings: correction.estimatedSavings,
+        inputData: payload.data,
+        employeeId: payload.recordId,
+        aiModel: 'claude-3-5-sonnet-20241022',
+        processingTime: responseTime,
+        correctionsFound: correction.issuesFound.length > 0,
+        correctionCount: correction.issuesFound.length,
+        outputData: correction.correctedData,
+        issuesFound: correction.corrections,
         apiKeyId: apiKey.id,
-        status: 'PENDING',
+        status: 'PROCESSING',
       },
     });
 
@@ -105,13 +102,12 @@ export async function handleWebhook(
       success: true,
       correctionId: savedCorrection.id,
       issuesFound: correction.issuesFound.length,
-      severity: correction.severity,
-      confidence: correction.confidence,
-      estimatedSavings: correction.estimatedSavings,
       correction: {
         id: savedCorrection.id,
         status: savedCorrection.status,
         createdAt: savedCorrection.createdAt,
+        correctionsFound: savedCorrection.correctionsFound,
+        correctionCount: savedCorrection.correctionCount,
       },
     });
 
@@ -145,12 +141,15 @@ async function logWebhookCall(
   try {
     await prisma.automationLog.create({
       data: {
-        eventType: 'webhook_called',
-        systemType: systemType.toUpperCase() as any,
+        eventType: 'PAYROLL_WEBHOOK_RECEIVED',
+        eventData: requestBody || {},
+        endpoint: `/api/automation/${systemType}/webhook`,
+        method: 'POST',
+        ipAddress: '0.0.0.0',
+        statusCode: success ? 200 : 500,
         success,
-        errorMessage: errorMessage || null,
+        errorMsg: errorMessage || null,
         responseTime,
-        requestBody: requestBody || null,
         apiKeyId,
       },
     });

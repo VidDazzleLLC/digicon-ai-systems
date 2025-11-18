@@ -30,18 +30,11 @@ export async function validateApiKey(
   }
 
   try {
-    // Build where clause with proper type
-    const whereClause: any = {
-      active: true,
-    };
-    
-    if (expectedSystemType) {
-      whereClause.systemType = expectedSystemType as any;
-    }
-
     // Find all active API keys (we need to hash check each one)
     const apiKeys = await prisma.apiKey.findMany({
-      where: whereClause
+      where: {
+        status: 'ACTIVE',
+      },
     });
 
     // Check each key's hash
@@ -53,8 +46,8 @@ export async function validateApiKey(
           where: { id: key.id },
           data: {
             lastUsedAt: new Date(),
-            usageCount: { increment: 1 },
-            dailyUsage: { increment: 1 }
+            requestsToday: { increment: 1 },
+            totalRequests: { increment: 1 }
           }
         });
 
@@ -89,7 +82,7 @@ export async function checkRateLimit(apiKeyId: string): Promise<boolean> {
     await prisma.apiKey.update({
       where: { id: apiKeyId },
       data: {
-        dailyUsage: 0,
+        requestsToday: 0,
         lastResetAt: now
       }
     });
@@ -97,5 +90,5 @@ export async function checkRateLimit(apiKeyId: string): Promise<boolean> {
   }
 
   // Check if under limit
-  return apiKey.dailyUsage < apiKey.dailyLimit;
+  return apiKey.requestsToday < apiKey.requestsPerDay;
 }
