@@ -80,31 +80,31 @@ export default function Home() {
                 </p>
 
                 {/* FREE PAYROLL AUDIT CTA - Prominent on first page view */}
-                <div className="mb-12 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border-2 border-green-500/50 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl">
+                <div className="mb-12 bg-gradient-to-r from-orange-500/20 to-amber-500/20 border-2 border-amber-500/50 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl">
                   <div className="text-center">
-                    <div className="inline-block bg-green-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
-                      🎁 FREE SERVICE - LIMITED TIME
+                    <div className="inline-block bg-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
+                      text-amber-400🔥 BLACK FRIDAY SALE
                     </div>
                     <h3 className="text-4xl font-extrabold text-white mb-2">
-                      Free Payroll Audit <span className="text-green-400">(One Quarter)</span>
+                      Free Payroll Audit <span className="text-amber-400">(One Quarter)</span>
                     </h3>
                     <p className="text-2xl font-bold text-yellow-400 mb-4">
-                      $2,500 Value - FREE for Limited Time
+                      text-amber-400🔥 BLACK FRIDAY SALE<span className="line-through text-gray-500">$2,400</span> <span className="text-5xl font-black text-amber-400">$249</span> <span className="text-amber-400">90% OFF - While Supplies Last</span>
                     </p>
                     <p className="text-xl text-gray-200 mb-6">
-                      Analyze <span className="font-bold text-green-400">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
+                      Analyze <span className="font-bold text-amber-400">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                        <p className="text-3xl font-bold text-green-400">15-20%</p>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-amber-500/30">
+                        <p className="text-3xl font-bold text-amber-400">15-20%</p>
                         <p className="text-sm text-gray-300">Average Savings Found</p>
                       </div>
-                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                        <p className="text-3xl font-bold text-green-400">$0</p>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-amber-500/30">
+                        <p className="text-3xl font-bold text-amber-400">$0</p>
                         <p className="text-sm text-gray-300">Cost to You</p>
                       </div>
-                      <div className="bg-slate-800/50 rounded-lg p-4 border border-green-500/30">
-                        <p className="text-3xl font-bold text-green-400">9 sec</p>
+                      <div className="bg-slate-800/50 rounded-lg p-4 border border-amber-500/30">
+                        <p className="text-3xl font-bold text-amber-400">9 sec</p>
                         <p className="text-sm text-gray-300">Analysis Time</p>
                       </div>
                     </div>
@@ -113,7 +113,7 @@ export default function Home() {
                         <span className="font-bold text-blue-400">🔒 100% Secure:</span> All file uploads happen in Secure Conference Rooms with military-grade AES-256-GCM encryption, SOC 2 Type II compliance, and complete confidentiality
                       </p>
                     </div>
-                    <button onClick={() => setActiveSection('conferencerooms')} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-5 rounded-lg text-xl font-bold shadow-2xl transition-all duration-200 hover:scale-105">
+                    <button onClick={() => setActiveSection('conferencerooms')} className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-green-600 hover:to-emerald-600 text-white px-10 py-5 rounded-lg text-xl font-bold shadow-2xl transition-all duration-200 hover:scale-105">
                       Get Your FREE Audit (One Quarter) →
                     </button>
                     <p className="text-xs text-gray-400 mt-4">
@@ -129,23 +129,23 @@ export default function Home() {
                     <h3 className="text-2xl font-bold text-white mb-4">What We Analyze (One Quarter = 3 Months)</h3>
                     <ul className="space-y-3 text-gray-300">
                       <li className="flex items-start">
-                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span className="text-amber-400 mr-2 text-lg">✓</span>
                         <span>Overpayments and duplicate payments</span>
                       </li>
                       <li className="flex items-start">
-                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span className="text-amber-400 mr-2 text-lg">✓</span>
                         <span>Payroll calculation errors</span>
                       </li>
                       <li className="flex items-start">
-                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span className="text-amber-400 mr-2 text-lg">✓</span>
                         <span>Tax withholding discrepancies</span>
                       </li>
                       <li className="flex items-start">
-                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span className="text-amber-400 mr-2 text-lg">✓</span>
                         <span>Benefits and deduction inconsistencies</span>
                       </li>
                       <li className="flex items-start">
-                        <span className="text-green-400 mr-2 text-lg">✓</span>
+                        <span className="text-amber-400 mr-2 text-lg">✓</span>
                         <span>Compliance risks and audit trail gaps</span>
                       </li>
                     </ul>
@@ -191,10 +191,10 @@ export default function Home() {
                       We audit 6 core systems to uncover hidden revenue leaks and cost inefficiencies.
                     </p>
                     <div className="space-y-4">
-                      <div className="border-l-4 border-green-500 pl-4">
+                      <div className="border-l-4 border-amber-500 pl-4">
                         <h4 className="text-white font-bold">Payroll Processing</h4>
                         <p className="text-gray-400 text-sm">KPI: 15-20% overpayment reduction</p>
-                        <p className="text-green-400 font-bold">Potential Savings: $2.5B/year</p>
+                        <p className="text-amber-400 font-bold">Potential Savings: $2.5B/year</p>
                       </div>
                       <div className="border-l-4 border-blue-500 pl-4">
                         <h4 className="text-white font-bold">HRIS/HCM Systems</h4>
@@ -234,35 +234,35 @@ export default function Home() {
                     </p>
                     <div className="space-y-3">
                       <div className="flex items-start">
-                        <span className="text-green-400 mr-2">✅</span>
+                        <span className="text-amber-400 mr-2">✅</span>
                         <div>
                           <p className="text-white font-semibold">Military-Grade Encryption</p>
                           <p className="text-gray-400 text-sm">AES-256-GCM for all uploaded files</p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-green-400 mr-2">✅</span>
+                        <span className="text-amber-400 mr-2">✅</span>
                         <div>
                           <p className="text-white font-semibold">Single-Use Access Codes</p>
                           <p className="text-gray-400 text-sm">Cryptographically secure, 8-character codes</p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-green-400 mr-2">✅</span>
+                        <span className="text-amber-400 mr-2">✅</span>
                         <div>
                           <p className="text-white font-semibold">Auto-Expiration</p>
                           <p className="text-gray-400 text-sm">Rooms automatically expire after 90 days</p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-green-400 mr-2">✅</span>
+                        <span className="text-amber-400 mr-2">✅</span>
                         <div>
                           <p className="text-white font-semibold">Complete Audit Trail</p>
                           <p className="text-gray-400 text-sm">Every access attempt logged for compliance</p>
                         </div>
                       </div>
                       <div className="flex items-start">
-                        <span className="text-green-400 mr-2">✅</span>
+                        <span className="text-amber-400 mr-2">✅</span>
                         <div>
                           <p className="text-white font-semibold">SOC 2 Type II Compliance</p>
                           <p className="text-gray-400 text-sm">Enterprise security standards</p>
@@ -295,8 +295,8 @@ export default function Home() {
                       <p className="text-2xl font-bold text-blue-400">24/7</p>
                       <p className="text-sm text-gray-300">Always Available</p>
                     </div>
-                    <div className="bg-green-500/10 rounded-lg p-4 border border-green-500/30 text-center">
-                      <p className="text-2xl font-bold text-green-400">3x</p>
+                    <div className="bg-amber-500/10 rounded-lg p-4 border border-amber-500/30 text-center">
+                      <p className="text-2xl font-bold text-amber-400">3x</p>
                       <p className="text-sm text-gray-300">Faster Response Time</p>
                     </div>
                     <div className="bg-purple-500/10 rounded-lg p-4 border border-purple-500/30 text-center">
@@ -308,7 +308,7 @@ export default function Home() {
 
                 <div className="flex justify-center items-center space-x-8 mb-12 mt-12">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-green-400">${(arr / 1000000).toFixed(2)}M</div>
+                    <div className="text-4xl font-bold text-amber-400">${(arr / 1000000).toFixed(2)}M</div>
                     <div className="text-sm text-gray-400">ARR (Live)</div>
                   </div>
                   <div className="text-center">
@@ -339,7 +339,7 @@ export default function Home() {
                   <p className="text-gray-300">Click "Create New Conference Room" or contact our team. We'll create a dedicated room for your company.</p>
                 </div>
                 <div className="bg-slate-800/50 rounded-xl p-6 border border-blue-500/30">
-                  <div className="text-4xl font-bold text-green-400 mb-3">2</div>
+                  <div className="text-4xl font-bold text-amber-400 mb-3">2</div>
                   <h4 className="text-xl font-bold text-white mb-2">Receive Your Code</h4>
                   <p className="text-gray-300">You'll receive a unique 8-character access code via email. This code is single-use and expires in 90 days.</p>
                 </div>
@@ -358,7 +358,7 @@ export default function Home() {
 
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-4xl font-bold text-white">Your Conference Rooms</h2>
-              <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition">
+              <button onClick={() => setShowCreateModal(true)} className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition">
                 + Create New Conference Room
               </button>
             </div>
@@ -369,7 +369,7 @@ export default function Home() {
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-bold text-white group-hover:text-blue-400 transition">{room.name}</h3>
                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      room.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                      room.status === 'active' ? 'bg-amber-500/20 text-amber-400' :
                       room.status === 'pending' ? 'bg-yellow-500/20 text-yellow-400' :
                       'bg-gray-500/20 text-gray-400'
                     }`}>
@@ -466,19 +466,19 @@ export default function Home() {
               <h3 className="text-xl font-bold text-white mb-4">Security & Privacy</h3>
               <ul className="space-y-2 text-gray-400 text-sm">
                 <li className="flex items-start">
-                  <span className="text-green-400 mr-2">✓</span>
+                  <span className="text-amber-400 mr-2">✓</span>
                   <span>SOC 2 Type II Certified</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-400 mr-2">✓</span>
+                  <span className="text-amber-400 mr-2">✓</span>
                   <span>GDPR Compliant</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-400 mr-2">✓</span>
+                  <span className="text-amber-400 mr-2">✓</span>
                   <span>AES-256-GCM Encryption</span>
                 </li>
                 <li className="flex items-start">
-                  <span className="text-green-400 mr-2">✓</span>
+                  <span className="text-amber-400 mr-2">✓</span>
                   <span>Zero Third-Party Data Sharing</span>
                 </li>
               </ul>
