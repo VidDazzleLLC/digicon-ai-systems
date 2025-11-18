@@ -26,11 +26,10 @@ export async function getDashboardData(
       );
     }
 
-    // Get company's API keys for this system
+    // Get company's API keys
     const apiKeys = await prisma.apiKey.findMany({
       where: {
-        companyId,
-        systemType: systemType.toUpperCase() as any,
+        customerId: companyId,
       },
     });
 
@@ -51,10 +50,9 @@ export async function getDashboardData(
     const apiKeyIds = apiKeys.map(k => k.id);
 
     // Get corrections
-    const corrections = await prisma.automationCorrection.findMany({
+    const corrections = await prisma.payrollCorrection.findMany({
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       orderBy: { createdAt: 'desc' },
       take: limit,
@@ -62,33 +60,28 @@ export async function getDashboardData(
       include: {
         apiKey: {
           select: {
-            name: true,
-            keyPrefix: true,
+            companyName: true,
+            customerEmail: true,
           },
         },
       },
     });
 
     // Get statistics
-    const stats = await prisma.automationCorrection.groupBy({
+    const stats = await prisma.payrollCorrection.groupBy({
       by: ['status'],
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       _count: true,
-      _sum: {
-        estimatedSavings: true,
-      },
     });
 
     const statsMap = {
       total: corrections.length,
       pending: 0,
-      approved: 0,
-      rejected: 0,
-      applied: 0,
-      totalSavings: 0,
+      processing: 0,
+      completed: 0,
+      failed: 0,
     };
 
     stats.forEach(s => {
@@ -96,14 +89,12 @@ export async function getDashboardData(
       if (status in statsMap) {
         statsMap[status as keyof typeof statsMap] = s._count;
       }
-      statsMap.totalSavings += s._sum.estimatedSavings || 0;
     });
 
     // Get recent activity logs
     const recentLogs = await prisma.automationLog.findMany({
       where: {
         apiKeyId: { in: apiKeyIds },
-        systemType: systemType.toUpperCase() as any,
       },
       orderBy: { createdAt: 'desc' },
       take: 10,
@@ -114,12 +105,12 @@ export async function getDashboardData(
       stats: statsMap,
       apiKeys: apiKeys.map(k => ({
         id: k.id,
-        name: k.name,
-        keyPrefix: k.keyPrefix,
-        active: k.active,
-        usageCount: k.usageCount,
-        dailyUsage: k.dailyUsage,
-        dailyLimit: k.dailyLimit,
+        companyName: k.companyName,
+        customerEmail: k.customerEmail,
+        status: k.status,
+        requestsToday: k.requestsToday,
+        requestsPerDay: k.requestsPerDay,
+        totalRequests: k.totalRequests,
         lastUsedAt: k.lastUsedAt,
       })),
       recentLogs,
