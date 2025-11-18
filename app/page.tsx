@@ -20,6 +20,7 @@ export default function Home() {
     { id: '3', name: 'Beta Testing - Secure Conference Room', description: 'Early access program', participants: 12, status: 'pending' }
   ]);
   const [showCreateModal, setShowCreateModal] = useState(false);
+    const [companyName, setCompanyName] = useState('');
  const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
   useEffect(() => {
