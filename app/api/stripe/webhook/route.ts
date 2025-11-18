@@ -14,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import { generateApiKey, revokeApiKey } from '@/lib/automation/api-keys';
 import Stripe from 'stripe';
+import { createMissionXClientFromPayment } from '@/lib/integrations/missionx';
 
 const prisma = new PrismaClient();
 
@@ -181,6 +182,13 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log(`📧 SEND EMAIL TO ${customerEmail}:`);
   console.log(`   API Key: ${apiKeyData.apiKey}`);
   console.log(`   Rate Limit: ${apiKeyData.requestsPerDay} requests/day`);
+
+    // Create MissionX client portal
+  await createMissionXClientFromPayment({
+    customerEmail,
+    companyName,
+    stripeCustomerId: customerId,
+  });
 }
 
 /**
