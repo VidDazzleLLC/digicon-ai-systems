@@ -6,6 +6,10 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Add explicit binaryTargets so Prisma downloads the correct query engine binaries
+  // at generate time. Include "native" for local development and Debian targets
+  // for when used by cloud/container hosts (adjust if you use Alpine/musl).
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x"]
 }
 
 datasource db {
