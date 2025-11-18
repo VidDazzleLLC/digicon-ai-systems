@@ -49,9 +49,7 @@ export default function Home() {
         body: JSON.stringify({
           companyName: newRoomName,
           cfoEmail: cfoEmail,
-          cfPName: cfoName || 'CFO',
-          cfPEmail: cfoEmail,
-        }),
+                  }),
       });
 
       const data = await response.json();
