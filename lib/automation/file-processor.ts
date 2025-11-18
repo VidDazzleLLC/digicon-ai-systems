@@ -9,6 +9,9 @@ import { correctPayrollData, validatePayrollData, PayrollData } from './payroll-
 
 const prisma = new PrismaClient();
 
+// Maximum file size for processing (10MB)
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 /**
  * File upload data from MissionX webhook
  */
