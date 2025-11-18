@@ -20,9 +20,8 @@ export default function Home() {
     { id: '3', name: 'Beta Testing - Secure Conference Room', description: 'Early access program', participants: 12, status: 'pending' }
   ]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
-  const [newRoomDesc, setNewRoomDesc] = useState('');
-
+ const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
   useEffect(() => {
     const interval = setInterval(() => {
       setArr(prev => prev + Math.floor(Math.random() * 1000 + 100));
@@ -31,17 +30,17 @@ export default function Home() {
   }, []);
 
   const createConferenceRoom = () => {
-    if (!newRoomName.trim()) return;
+    if (!companyName.trim()) return;
     const newRoom: ConferenceRoom = {
       id: Date.now().toString(),
-      name: newRoomName,
-      description: newRoomDesc,
-      participants: 1,
+      name: companyName,
+      description: `${fullName} - ${email}`,      participants: 1,
       status: 'active'
     };
     setConferenceRooms([...conferenceRooms, newRoom]);
-    setNewRoomName('');
-    setNewRoomDesc('');
+    setCompanyName('');
+    setFullName('');
+        setEmail('');
     setShowCreateModal(false);
   };
 
@@ -394,18 +393,25 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
                   <input
                     type="text"
-                    placeholder="Room Name"
-                    value={newRoomName}
-                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="Room"Company Name"Name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
-                  <textarea
-                    placeholder="Description"
-                    value={newRoomDesc}
-                    onChange={(e) => setNewRoomDesc(e.target.value)}
-                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 h-24 focus:outline-none focus:border-blue-500"
-                  />
-                  <div className="flex space-x-4">
+                  <input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+            />
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-blue-500"
+            /><div className="flex space-x-4">
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
