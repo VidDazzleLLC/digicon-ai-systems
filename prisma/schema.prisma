@@ -211,6 +211,7 @@ model ApiKey {
   // Relationships
   corrections     PayrollCorrection[]
   automationLogs  AutomationLog[]
+  fileUploads     MissionXFileUpload[]
   
   @@index([key])
   @@index([keyHash])
@@ -263,6 +264,9 @@ model PayrollCorrection {
   // Status
   status          CorrectionStatus @default(PROCESSING)
   errorMsg        String?
+  
+  // File Upload Relationship
+  fileUpload      MissionXFileUpload?
   
   @@index([apiKeyId])
   @@index([createdAt])
@@ -317,6 +321,10 @@ enum AutomationEventType {
   STRIPE_PAYMENT_RECEIVED
   SUBSCRIPTION_CREATED
   SUBSCRIPTION_CANCELLED
+  MISSIONX_FILE_UPLOAD_RECEIVED
+  MISSIONX_FILE_PROCESSING_STARTED
+  MISSIONX_FILE_PROCESSING_COMPLETED
+  MISSIONX_FILE_PROCESSING_FAILED
 }
 
 model StripeCustomer {
@@ -362,4 +370,57 @@ enum SubscriptionStatus {
   CANCELLED
   UNPAID
   INCOMPLETE
+}
+
+// ============================================================================
+// MISSIONX FILE UPLOAD MODELS
+// ============================================================================
+
+model MissionXFileUpload {
+  id              String   @id @default(cuid())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // MissionX Details
+  missionxClientId    String?
+  missionxFileId      String?
+  missionxUserId      String?
+  
+  // File Information
+  fileName        String
+  fileSize        Int?
+  fileType        String?
+  fileUrl         String?
+  
+  // Processing Status
+  status          FileUploadStatus @default(PENDING)
+  processedAt     DateTime?
+  
+  // Extracted Data
+  extractedData   Json?    // Raw data extracted from file
+  recordCount     Int?     // Number of payroll records
+  
+  // Correction Results
+  correctionId    String?  @unique
+  correction      PayrollCorrection? @relation(fields: [correctionId], references: [id], onDelete: SetNull)
+  
+  // Processing Metadata
+  processingTime  Int?     // Milliseconds
+  errorMsg        String?
+  
+  // API Key Association
+  apiKeyId        String?
+  apiKey          ApiKey?  @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  
+  @@index([missionxClientId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([apiKeyId])
+}
+
+enum FileUploadStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
 }
