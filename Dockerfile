@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 
 # Install dev deps so prisma generate can run
-RUN npm ci --production=false
+RUN npm install --production=false
 
 # Copy Prisma schema and source
 COPY prisma ./prisma
