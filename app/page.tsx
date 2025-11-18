@@ -22,6 +22,7 @@ export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
  const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
+    const [companyName, setCompanyName] = useState('');
   useEffect(() => {
     const interval = setInterval(() => {
       setArr(prev => prev + Math.floor(Math.random() * 1000 + 100));
@@ -393,8 +394,7 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
                   <input
                     type="text"
-                    placeholder="Room"Company Name"Name"
-                    value={companyName}
+            placeholder="Company Name"                    value={companyName}
                     onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
