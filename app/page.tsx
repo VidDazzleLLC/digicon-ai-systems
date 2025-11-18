@@ -20,9 +20,8 @@ export default function Home() {
     { id: '3', name: 'Beta Testing - Secure Conference Room', description: 'Early access program', participants: 12, status: 'pending' }
   ]);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newRoomName, setNewRoomName] = useState('');
-    const [cfoEmail, setCfoEmail] = useState('');
-
+ const [fullName, setFullName] = useState('');
+    const [email, setEmail] = useState('');
   useEffect(() => {
     const interval = setInterval(() => {
       setArr(prev => prev + Math.floor(Math.random() * 1000 + 100));
@@ -30,65 +29,24 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const createConferenceRoom = async () => {
-    // Validate email is provided
-    if (!cfoEmail.trim()) {
-      alert('Please enter your email address to receive the access code.');
-      return;
-    }
-
-    if (!newRoomName.trim()) return;
-
-    try {
-      // Call the API to create conference room and send email
-      const response = await fetch('/api/dealroom/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          companyName: newRoomName,
-          cfoEmail: cfoEmail,
-                  }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        // Success - show message to user
-        alert(`Conference room created successfully! An access code has been sent to ${cfoEmail}`);
-        
-        // Clear form fields
-        setNewRoomName('');
-        setCfoEmail('');
-        setShowCreateModal(false);
-      } else {
-        // Error from API
-        alert(`Error: ${data.error || 'Failed to create conference room'}`);
-      }
-    } catch (error) {
-      console.error('Error creating conference room:', error);
-      alert('An error occurred while creating the conference room. Please try again.');
-    }
+  const createConferenceRoom = () => {
+    if (!companyName.trim()) return;
+    const newRoom: ConferenceRoom = {
+      id: Date.now().toString(),
+      name: companyName,
+      description: `${fullName} - ${email}`,      participants: 1,
+      status: 'active'
+    };
+    setConferenceRooms([...conferenceRooms, newRoom]);
+    setCompanyName('');
+    setFullName('');
+        setEmail('');
+    setShowCreateModal(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       {/* Navigation */}
-
-            {/* Black Friday Promotional Banner */}
-      <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500 py-4 px-6 text-center">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">🔥 Black Friday Payroll Audit Offer 🔥</h2>
-          <div className="flex items-center justify-center gap-4 mb-3">
-            <span className="text-2xl text-slate-900 line-through opacity-70">Regular Price: $2,400</span>
-            <span className="text-5xl font-bold text-white">$249</span>
-          </div>
-          <p className="text-xl text-slate-900 font-semibold mb-3">Limited Time: Save 90% on Your Payroll Compliance Audit!</p>
-          <p className="text-lg text-slate-800">While supplies last - Payment required to reserve this offer</p>
-        </div>
-      </div>
-
       <nav className="fixed top-0 w-full bg-slate-900/80 backdrop-blur-lg border-b border-blue-500/20 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -435,23 +393,28 @@ export default function Home() {
                   <h3 className="text-2xl font-bold text-white mb-6">Create Conference Room</h3>
                   <input
                     type="text"
-                    placeholder="Company Name"
-                    value={newRoomName}
-                    onChange={(e) => setNewRoomName(e.target.value)}
+                    placeholder="Room"Company Name"Name"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
                     className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
                   />
-                  <div className="flex space-x-4">
+                  <input
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+            />
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-6 focus:outline-none focus:border-blue-500"
+            /><div className="flex space-x-4">
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
-                                  <input
-                                                    type="email"
-                                                    placeholder="Your Email (required to receive access code)"
-                                                    value={cfoEmail}
-                                                    onChange={(e) => setCfoEmail(e.target.value)}
-                                                    required
-                                                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
-                                                  />
                     <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Create
                     </button>
