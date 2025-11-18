@@ -43,7 +43,6 @@ export async function GET(request: NextRequest) {
   const apiKeyFull = await prisma.apiKey.findUnique({
     where: { id: apiKeyRecord.id },
     }
-  });
 
   if (!apiKeyFull) {
     return NextResponse.json(
