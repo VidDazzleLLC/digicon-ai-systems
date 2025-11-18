@@ -88,7 +88,6 @@ export async function GET(request: NextRequest) {
     const dashboardData = {
       apiKey: {
         id: apiKeyRecord.id,
-        customerEmail: apiKeyRecord.customerEmail,
         companyName: apiKeyRecord.companyName,
         status: apiKeyRecord.status,
         billingStatus: apiKeyRecord.billingStatus,
