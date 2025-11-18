@@ -22,6 +22,8 @@ export default function Home() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
   const [newRoomDesc, setNewRoomDesc] = useState('');
+    const [cfoName, setCfoName] = useState('');
+    const [cfoEmail, setCfoEmail] = useState('');
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -31,18 +33,49 @@ export default function Home() {
   }, []);
 
   const createConferenceRoom = () => {
+    // Validate email is provided
+    if (!cfoEmail.trim()) {
+      alert('Please enter your email address to receive the access code.');
+      return;
+    }
+
     if (!newRoomName.trim()) return;
-    const newRoom: ConferenceRoom = {
-      id: Date.now().toString(),
-      name: newRoomName,
-      description: newRoomDesc,
-      participants: 1,
-      status: 'active'
-    };
-    setConferenceRooms([...conferenceRooms, newRoom]);
-    setNewRoomName('');
-    setNewRoomDesc('');
-    setShowCreateModal(false);
+
+    try {
+      // Call the API to create conference room and send email
+      const response = await fetch('/api/dealroom/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName: newRoomName,
+          cfoEmail: cfoEmail,
+          cfPName: cfoName || 'CFO',
+          cfPEmail: cfoEmail,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Success - show message to user
+        alert(`Conference room created successfully! An access code has been sent to ${cfoEmail}`);
+        
+        // Clear form fields
+        setNewRoomName('');
+        setNewRoomDesc('');
+        setCfoName('');
+        setCfoEmail('');
+        setShowCreateModal(false);
+      } else {
+        // Error from API
+        alert(`Error: ${data.error || 'Failed to create conference room'}`);
+      }
+    } catch (error) {
+      console.error('Error creating conference room:', error);
+      alert('An error occurred while creating the conference room. Please try again.');
+    }
   };
 
   return (
@@ -423,6 +456,20 @@ export default function Home() {
                     <button onClick={() => setShowCreateModal(false)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Cancel
                     </button>
+                                  <input
+                                                    placeholder="Your Name (optional)"
+                                                    value={cfoName}
+                                                    onChange={(e) => setCfoName(e.target.value)}
+                                                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                                                  />
+                                  <input
+                                                    type="email"
+                                                    placeholder="Your Email (required to receive access code)"
+                                                    value={cfoEmail}
+                                                    onChange={(e) => setCfoEmail(e.target.value)}
+                                                    required
+                                                    className="w-full bg-slate-700 border border-blue-500/30 rounded-lg px-4 py-3 text-white mb-4 focus:outline-none focus:border-blue-500"
+                                                  />
                     <button onClick={createConferenceRoom} className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-4 py-3 rounded-lg font-medium transition">
                       Create
                     </button>
