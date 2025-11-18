@@ -32,7 +32,7 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const createConferenceRoom = () => {
+  const createConferenceRoom = async () => {
     // Validate email is provided
     if (!cfoEmail.trim()) {
       alert('Please enter your email address to receive the access code.');
