@@ -41,9 +41,9 @@ export async function GET(request: NextRequest) {
 
   // Re-fetch the API key record with the fields we need (to satisfy TypeScript
   // and ensure fields like status, billingStatus, createdAt, usage counters exist)
-  const apiKeyFull = ( await prisma.apiKey.findUnique({
-    where: { id: apiKeyRecord.id },
-      })) as ApiKey | null;
+const apiKeyFull: ApiKey | null = await prisma.apiKey.findUnique({
+      where: { id: apiKeyRecord.id },
+    });
 43
     
   if (!apiKeyFull) {
