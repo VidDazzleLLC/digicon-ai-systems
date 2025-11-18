@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type ApiKey } from '@prisma/client';
 import { validateApiKey } from '@/lib/automation/api-keys';
 import { ApiKey } from '@prisma/client';
 
@@ -39,30 +39,38 @@ export async function GET(request: NextRequest) {
       );
     }
 
-  // Re-fetch the API key record with the fields we need (to satisfy TypeScript
-  // and ensure fields like status, billingStatus, createdAt, usage counters exist)
-const apiKeyFull: ApiKey | null = await prisma.apiKey.findUnique({
-      where: { id: apiKeyRecord.id },
-    });
-43
-    
-  if (!apiKeyFull) {
-    return NextResponse.json(
-      { error: 'API key not found' },
-      { status: 404 }
-    );
-  }
+    // Make the existence of id explicit (avoids TypeScript narrowing/nullable issues)
+    const { id } = apiKeyRecord;
+    if (!id) {
+      return NextResponse.json(
+        { error: 'API key record missing id' },
+        { status: 400 }
+      );
+    }
+
+    // Re-fetch the API key record from the database and assert its type to ApiKey
+    // This avoids TypeScript complaints about select definitions in this environment
+    const apiKeyFull = (await prisma.apiKey.findUnique({
+      where: { id },
+    })) as ApiKey | null;
+
+    if (!apiKeyFull) {
+      return NextResponse.json(
+        { error: 'API key not found' },
+        { status: 404 }
+      );
+    }
     
     // Get corrections
     const corrections = await prisma.payrollCorrection.findMany({
-      where: { apiKeyId: apiKeyRecord.id },
+      where: { apiKeyId: id },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
     
     // Get automation logs
     const logs = await prisma.automationLog.findMany({
-      where: { apiKeyId: apiKeyRecord.id },
+      where: { apiKeyId: id },
       orderBy: { createdAt: 'desc' },
       take: 100,
     });
@@ -112,8 +120,8 @@ const apiKeyFull: ApiKey | null = await prisma.apiKey.findUnique({
         requestsToday: apiKeyFull.requestsToday,
         requestsPerDay: apiKeyFull.requestsPerDay,
         totalRequests: apiKeyFull.totalRequests,
-        lastUsedAt: apiKeyRecord.lastUsedAt,
-        percentUsed: (apiKeyRecord.requestsToday / apiKeyRecord.requestsPerDay * 100).toFixed(1),
+        lastUsedAt: apiKeyFull.lastUsedAt ?? apiKeyRecord.lastUsedAt,
+        percentUsed: ((apiKeyFull.requestsToday ?? 0) / (apiKeyFull.requestsPerDay ?? 1) * 100).toFixed(1),
       },
       statistics: {
         totalCorrections,
