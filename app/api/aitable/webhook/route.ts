@@ -56,6 +56,7 @@ export async function POST(request: NextRequest) {
         entityId: '', // Will be updated after processing
         syncDirection: 'aitable_to_app',
         syncStatus: 'pending',
+              lastSyncedAt: new Date(),
       },
     });
 
