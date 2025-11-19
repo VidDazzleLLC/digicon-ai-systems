@@ -161,14 +161,43 @@ export interface SandboxOptions {
 
 /**
  * Code Execution Result
+ *
+ * Made backwards-compatible: many callers expect `success` and `output`.
+ * Some older code uses `stdout`/`stderr` and `executionTime` (ms). We include
+ * aliases for both shapes so the rest of the codebase can reference either.
  */
 export interface CodeExecutionResult {
+  // canonical success flag used by tools.ts and other callers
+  success: boolean;
+
+  // human-readable/text output (preferred)
+  output?: string;
+
+  // console-like fields (legacy / runtime-specific)
   stdout?: string;
   stderr?: string;
+
+  // exit / runtime metadata
   exitCode?: number;
+
+  // execution time in milliseconds (common name)
   executionTimeMs?: number;
+  // legacy alias: executionTime
+  executionTime?: number;
+
+  // memory used in MB (common name)
+  memoryUsedMb?: number;
+  // legacy alias
+  memoryUsed?: number;
+
+  // error message if success is false
   error?: string;
-  artifacts?: Array<{ uri: string; mimeType?: string }>;
+
+  // provider-specific artifacts (e.g., generated files, URIs)
+  artifacts?: Array<{ uri: string; mimeType?: string; metadata?: Record<string, any> }>;
+
+  // free-form metadata for additional data
+  metadata?: Record<string, any>;
 }
 
 /**
