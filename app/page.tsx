@@ -47,7 +47,8 @@ export default function Home() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">Digicon AI Systems</h1>
             <button
-              onClick={() => setShowAuditForm(true)}
+<a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
+                           onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
             >
               Get Audit
@@ -264,6 +265,10 @@ export default function Home() {
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-gray-400">
         © {new Date().getFullYear()} Digicon AI Systems. All rights reserved.
+          <div className="mt-4 space-x-6 text-sm">
+    <a href="/privacy" className="text-gray-400 hover:text-white transition">Privacy Policy</a>
+    <a href="/terms" className="text-gray-400 hover:text-white transition">Terms & Conditions</a>
+  </div>
       </footer>
 
       {/* Chatbot Widget */}
