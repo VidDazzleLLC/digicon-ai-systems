@@ -5,6 +5,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { correctPayrollData, PayrollData } from './payroll-corrector';
+import { detectCSVFormat, normalizeCSVData, validateNormalizedData } from './csv-normalizer';
 
 const prisma = new PrismaClient();
 
@@ -222,7 +223,20 @@ async function parseCSV(buffer: Buffer): Promise<PayrollData[]> {
     console.warn('CSV parsing warnings:', result.errors);
   }
 
-  return result.data as PayrollData[];
+// Detect and normalize CSV format
+  const headers = Object.keys(result.data[0] || {});
+  const detection = detectCSVFormat(headers);
+  
+  console.log(`📋 Detected CSV format: ${detection.format} (confidence: ${(detection.confidence * 100).toFixed(0)}%)`);
+  
+  const normalizedData = normalizeCSVData(result.data, detection.detectedFields);
+  const validation = validateNormalizedData(normalizedData);
+  
+  if (!validation.valid) {
+    throw new Error(`Data validation failed:\n${validation.errors.join('\n')}`);
+  }
+  
+  return normalizedData;
 }
 
 /**
@@ -245,5 +259,23 @@ async function parseExcel(buffer: Buffer): Promise<PayrollData[]> {
     defval: null,
   });
 
-  return data as PayrollData[];
+// Detect and normalize Excel format
+  const headers = data.length > 0 ? Object.keys(data[0] || {}) : [];
+  
+  if (headers.length === 0) {
+    throw new Error('No data found in Excel file');
+  }
+  
+  const detection = detectCSVFormat(headers);
+  
+  console.log(`📋 Detected Excel format: ${detection.format} (confidence: ${(detection.confidence * 100).toFixed(0)}%)`);
+  
+  const normalizedData = normalizeCSVData(data, detection.detectedFields);
+  const validation = validateNormalizedData(normalizedData);
+  
+  if (!validation.valid) {
+    throw new Error(`Data validation failed:\n${validation.errors.join('\n')}`);
+  }
+  
+  return normalizedData;
 }
