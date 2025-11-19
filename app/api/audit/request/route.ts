@@ -17,7 +17,32 @@ interface AuditRequestBody {
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as Partial<AuditRequestBody>;
+    const contentType = (request.headers.get('content-type') || '').toLowerCase();
+    console.log('Audit request content-type:', contentType);
+
+    // Parse body depending on content type. Support application/json, urlencoded, and multipart/form-data.
+    let body: Partial<AuditRequestBody> = {};
+
+    if (contentType.includes('application/json')) {
+      body = (await request.json()) as Partial<AuditRequestBody>;
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const text = await request.text();
+      body = Object.fromEntries(new URLSearchParams(text)) as Partial<AuditRequestBody>;
+    } else {
+      // Try formData (multipart/form-data or fetch(FormData)). If that fails, fall back to text/urlencoded parsing.
+      try {
+        const form = await request.formData();
+        body = Object.fromEntries(
+          Array.from(form.entries()).map(([k, v]) => [k, typeof v === 'string' ? v : String(v)])
+        ) as Partial<AuditRequestBody>;
+      } catch (e) {
+        const text = await request.text();
+        body = Object.fromEntries(new URLSearchParams(text)) as Partial<AuditRequestBody>;
+      }
+    }
+
+    console.log('Parsed audit request body:', body);
+
     const { companyName, contactName, email } = body;
 
     // Validate required fields
