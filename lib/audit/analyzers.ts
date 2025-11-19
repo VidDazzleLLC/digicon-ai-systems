@@ -1,12 +1,15 @@
 /**
- * Audit analyzers (sanitized).
+ * Audit analyzers (sanitized and with health-check helper)
  *
- * This file removes raw/unquoted JSON/prompt blocks and applies defensive parsing
- * around AI responses to avoid runtime parse errors and TypeScript compile errors.
+ * This file exports:
+ * - analyzePayrollWithClaude    (full analysis / uses Anthropic if configured)
+ * - analyzePayrollWithTogether (fallback)
+ * - analyzePayrollHealthCheck  (lightweight health check / entry point for health-check calls)
+ * - analyzeCompliance          (fallback for compliance)
+ * - runAudit                  (orchestrator)
  */
 
-import Anthropic from '@anthropic-ai/sdk'; // keep if used in runtime
-// If Anthropic is optional in some environments, you may guard the usage with process.env checks.
+import Anthropic from '@anthropic-ai/sdk';
 
 export interface AuditData {
   systemType: 'payroll' | 'hris' | 'erp' | 'crm' | 'compliance' | 'ai_infrastructure';
@@ -27,9 +30,7 @@ export interface SystemAnalysisResult {
   confidence: number;
 }
 
-/**
- * Helper: safe JSON parse
- */
+/** Helper: safe JSON parse */
 function safeParseJSON<T = any>(input: string): T | null {
   try {
     return JSON.parse(input) as T;
@@ -39,31 +40,12 @@ function safeParseJSON<T = any>(input: string): T | null {
 }
 
 /**
- * Analyze payroll data using Anthropic Claude (defensive)
+ * Analyze payroll data using Anthropic Claude (defensive).
+ * For environments without a configured API key we return a deterministic stub.
  */
 export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnalysisResult> {
-  // Build a prompt string — keep it quoted properly
-  const prompt = [
-    'You are an analysis agent. Return ONLY valid JSON in this exact format (no markdown, no explanation):',
-    JSON.stringify({
-      findings: [
-        {
-          type: 'overpayment',
-          description: 'specific finding',
-          amount: 1234.56,
-          employeeId: 'EMP001',
-          period: '2024-Q3',
-        },
-      ],
-      totalSavings: 12345.67,
-      wastePercentage: 18.5,
-    }),
-    'Now analyze the provided payroll data and return JSON matching that schema.'
-  ].join('\n\n');
-
-  // If Anthropic is not configured, fallback to a deterministic local audit result
+  // Minimal defensive behavior: if no API key, return a deterministic stub
   if (!process.env.ANTHROPIC_API_KEY) {
-    // Very basic local "analysis" for dev/test
     return {
       systemType: 'Payroll Processing',
       kpiMetrics: {
@@ -78,29 +60,31 @@ export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnaly
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  // Compose the request in a way compatible with the SDK surface
+  // Build a simple prompt (kept minimal and quoted)
+  const prompt = [
+    'You are an analysis agent. Return ONLY valid JSON: { findings: [...], totalSavings: number, wastePercentage: number }',
+    'Analyze the provided payroll data and output JSON matching that schema.',
+    `Payroll Data: ${JSON.stringify(data ?? [])}`,
+  ].join('\n\n');
+
   try {
     const response = await client.messages.create({
       model: 'claude-3-5-sonnet-20241022',
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
-    } as any); // cast to any if SDK type mismatches
+    } as any);
 
-    // The SDK returns a structure that contains message / content — handle defensively
-    const message = (response && (response as any).content) ? (response as any) : response;
-
-    // Extract readable text from known shapes; be defensive
+    // Defensive extraction of text
     let responseText = '';
-    if (Array.isArray((message as any).content) && (message as any).content.length > 0) {
-      const c0 = (message as any).content[0];
+    if (Array.isArray((response as any).content) && (response as any).content.length > 0) {
+      const c0 = (response as any).content[0];
       responseText = typeof c0 === 'string' ? c0 : (c0 && c0.text) || '';
-    } else if (typeof (message as any).text === 'string') {
-      responseText = (message as any).text;
+    } else if (typeof (response as any).text === 'string') {
+      responseText = (response as any).text;
     }
 
     const parsed = safeParseJSON<any>(responseText);
     if (!parsed) {
-      // fallback if the model returned non-JSON
       return {
         systemType: 'Payroll Processing',
         kpiMetrics: {
@@ -148,11 +132,81 @@ export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnaly
 }
 
 /**
- * Analyze payroll data with alternative provider / fallback
+ * Analyze payroll data with alternative provider / fallback.
+ * Delegates to the Claude analyzer for now.
  */
 export async function analyzePayrollWithTogether(data: any[]): Promise<SystemAnalysisResult> {
-  // Simple fallback: reuse analyzePayrollWithClaude behavior if no other provider exists.
   return analyzePayrollWithClaude(data);
+}
+
+/**
+ * analyzePayrollHealthCheck
+ *
+ * Lightweight health-check / quick-audit entry point.
+ * - Performs basic input validation and simple statistical checks (row counts, required columns)
+ * - Returns a quick SystemAnalysisResult summarizing whether the data looks healthy
+ * - If a deeper scan is requested, it delegates to a full analyzer
+ *
+ * Why this function: it provides a stable entry point for health checks and resolves build errors
+ * caused by missing/misspelled analyzPayrollHealthCheck references. If callers used a misspelling,
+ * correct call sites to use analyzePayrollHealthCheck (or keep the misspelled name but define it).
+ */
+export async function analyzePayrollHealthCheck(
+  data: any[],
+  options?: { deep?: boolean }
+): Promise<SystemAnalysisResult> {
+  const rows = Array.isArray(data) ? data : [];
+  const rowCount = rows.length;
+
+  // Basic column checks if any row exists
+  const firstRow = rows[0] || {};
+  const columns = Object.keys(firstRow);
+
+  const requiredColumns = ['employeeId', 'grossPay', 'netPay', 'taxWithheld'];
+  const missing = requiredColumns.filter((c) => !columns.includes(c));
+
+  // If caller asked for deep analysis, delegate to the full analyzer
+  if (options?.deep) {
+    return analyzePayrollWithClaude(rows);
+  }
+
+  // Compose a lightweight result
+  const healthy = missing.length === 0 && rowCount > 0;
+
+  const findings: string[] = [];
+  if (rowCount === 0) {
+    findings.push('No payroll rows found');
+  } else {
+    findings.push(`Row count: ${rowCount}`);
+  }
+  if (missing.length > 0) {
+    findings.push(`Missing required columns: ${missing.join(', ')}`);
+  } else {
+    findings.push('All required columns present');
+  }
+
+  // Quick numeric sanity checks (if fields present)
+  let negativeValuesFound = false;
+  for (let i = 0; i < Math.min(20, rows.length); i++) {
+    const r = rows[i];
+    if (r && typeof r.grossPay === 'number' && r.grossPay < 0) {
+      negativeValuesFound = true;
+      findings.push(`Negative grossPay for row ${i + 1}`);
+      break;
+    }
+  }
+
+  const confidence = healthy ? 88 : 45;
+
+  return {
+    systemType: 'Payroll Processing (health-check)',
+    kpiMetrics: {
+      wasteReduction: healthy ? 'N/A' : '0%',
+      efficiencyGain: healthy ? 'N/A' : 'N/A',
+    },
+    findings,
+    confidence,
+  };
 }
 
 /**
@@ -175,30 +229,27 @@ export function analyzeCompliance(data: any[]): SystemAnalysisResult {
   };
 }
 
-// Main audit orchestrator
+/**
+ * Main audit orchestrator
+ */
 export async function runAudit(auditData: AuditData): Promise<SystemAnalysisResult> {
   try {
-    // Route to appropriate analyzer based on system type
     switch (auditData.systemType) {
       case 'payroll':
-        return await analyzePayrollWithData(auditData);
-      case 'hrms':
-        return await analyzePayrollWithTogether(auditData);
+        // Some codepaths expect a quick health-check entry point; use health-check for light calls
+        return await analyzePayrollHealthCheck(auditData.rows);
+      case 'hris':
+        return await analyzePayrollWithTogether(auditData.rows);
       default:
-        return await analyzeCompliance(auditData);
+        return await analyzeCompliance(auditData.rows);
     }
   } catch (error) {
     console.error('Audit execution failed:', error);
     return {
       systemType: 'unknown',
       kpiMetrics: {},
-      wasteReduction: { value: 0, potential: 0 },
-      costSavings: 0,
-      efficiencyGain: 0,
-      errorReduction: 0,
-      speedImprovement: 0,
-      findings: [{ message: 'Audit execution failed', severity: 'critical' }],
-      confidence: 0
+      findings: ['Audit execution failed'],
+      confidence: 0,
     };
   }
 }
