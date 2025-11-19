@@ -221,7 +221,7 @@ async function handleAuditResultWebhook(
 function getEntityType(datasheetId: string): string {
   // Return generic type since specific datasheet IDs are not defined
   return 'record';
-}}
+}
 
 /**
  * GET /api/aitable/webhook
