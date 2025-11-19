@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import ChatbotWidget from './components/ChatbotWidget';
 
 type FormData = {
@@ -46,11 +47,17 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">Digicon AI Systems</h1>
+     46
+          <Link href="/why-digicon" className="text-orange-500 hover:text-orange-400 font-semibold transition mr-6">
+            Why Digicon
+            </Link>
+            275
             <button
               onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
             >
-              Get Audit
+              44
+              
             </button>
           </div>
         </div>
@@ -263,8 +270,16 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="py-8 text-center text-sm text-gray-400">
-        © {new Date().getFullYear()} Digicon AI Systems. All rights reserved.
-      </footer>
+<div className="space-y-4">
+            <div className="flex flex-wrap justify-center gap-4 mb-4">
+              <Link href="/privacy" className="text-gray-400 hover:text-orange-500 transition">Privacy Policy</Link>
+              <span className="text-gray-600">|</span>
+              <Link href="/terms" className="text-gray-400 hover:text-orange-500 transition">Terms & Conditions</Link>
+              <span className="text-gray-600">|</span>
+              <Link href="/gdpr" className="text-gray-400 hover:text-orange-500 transition">GDPR Compliance</Link>
+            </div>
+            <p>© {new Date().getFullYear()} Digicon AI Systems. All rights reserved.</p>
+          </div>      </footer>
 
       {/* Chatbot Widget */}
       <ChatbotWidget />
