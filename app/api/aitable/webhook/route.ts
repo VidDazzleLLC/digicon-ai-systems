@@ -219,11 +219,9 @@ async function handleAuditResultWebhook(
  * Get entity type from datasheet ID
  */
 function getEntityType(datasheetId: string): string {
-  if (datasheetId === DATASHEET_IDS.LEADS) return 'lead';
-  if (datasheetId === DATASHEET_IDS.ORDERS) return 'order';
-  if (datasheetId === DATASHEET_IDS.AUDIT_RESULTS) return 'audit_result';
-  return 'unknown';
-}
+  // Return generic type since specific datasheet IDs are not defined
+  return 'record';
+}}
 
 /**
  * GET /api/aitable/webhook
