@@ -42,14 +42,13 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
-      <nav className="fixed top-0 w-full bg-black border-b border-gray-800 z-50">
+      44
+      className="fixed top-0 w-full bg-black border-b border-gray-800 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">Digicon AI Systems</h1>
-            <button
-                 <a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
-                 <button              className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
-            >
+<a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
+            <button onClick={() => setShowAuditForm(true)} className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition">
               Get Audit
             </button>
           </div>
@@ -93,7 +92,8 @@ export default function Home() {
               </div>
             </div>
 
-            <button
+            51
+            
               onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-16 py-5 rounded-xl text-2xl font-bold transition-all hover:scale-105"
             >
@@ -181,7 +181,8 @@ export default function Home() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
                   />
-                  <button
+                  49
+                  
                     type="submit"
                     className="w-full bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-lg font-semibold transition"
                     disabled={isLoading}
