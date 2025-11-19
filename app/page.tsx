@@ -1,3 +1,4 @@
+// Build fix: Ensure API route is available - v1.2
 'use client';
 import { useState } from 'react';
 import ChatbotWidget from './components/ChatbotWidget';
