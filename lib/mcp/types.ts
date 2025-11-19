@@ -131,12 +131,32 @@ export interface MCPPrompt {
 
 /**
  * Sandbox Execution Options
+ *
+ * Backwards-compatibility: some code paths use `timeout` and `memoryLimit`.
+ * Newer code may prefer `timeoutMs` and `memoryLimitMb`. Accept both names.
  */
 export interface SandboxOptions {
+  // primary / legacy name (milliseconds)
+  timeout?: number;
+  // alternative clearer name (milliseconds)
   timeoutMs?: number;
+
+  // primary / legacy name (megabytes)
+  memoryLimit?: number;
+  // alternative clearer name (megabytes)
   memoryLimitMb?: number;
+
+  // whether network access in the sandbox is allowed
   allowNetwork?: boolean;
+
+  // modules that are allowed to be required/imported
   allowedModules?: string[];
+
+  // environment variables for the sandboxed execution
+  env?: Record<string, string>;
+
+  // additional provider-specific options (open-ended)
+  [key: string]: any;
 }
 
 /**
