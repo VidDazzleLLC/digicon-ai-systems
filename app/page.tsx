@@ -1,37 +1,37 @@
-l// Build fix: Ensure API route is available - v1.2
+// Build fix: Ensure API route is available - v1.2
 'use client';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import ChatbotWidget from './components/ChatbotWidget';
 
 export default function Home() {
   const [showAuditForm, setShowAuditForm] = useState(false);
-    const [formData, setFormData] = useState({ companyName: '', contactName: '', email: '' });
-    const [isLoading, setIsLoading] = useState(false);
-    const [isSuccess, setIsSuccess] = useState(false);
-    const [error, setError] = useState('');
-    const handleSubmit = async (e: React.FormEvent) => {
-          e.preventDefault();
-          if (!formData.companyName || !formData.contactName || !formData.email) {
-                  setError('Please fill in all fields');
-                  return;
-                }
-          setIsLoading(true);
-          setError('');
-          try {
-                  const response = await fetch('/api/audit/request', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(formData),
-                          });
-                  if (!response.ok) throw new Error('Submission failed');
-                  setIsSuccess(true);
-                  setFormData({ companyName: '', contactName: '', email: '' });
-                } catch (err) {
-                  setError('Failed to submit. Please try again.');
-                } finally {
-                  setIsLoading(false);
-                }
-        };
+  const [formData, setFormData] = useState({ companyName: '', contactName: '', email: '' });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!formData.companyName || !formData.contactName || !formData.email) {
+      setError('Please fill in all fields');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    try {
+      const response = await fetch('/api/audit/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+      if (!response.ok) throw new Error('Submission failed');
+      setIsSuccess(true);
+      setFormData({ companyName: '', contactName: '', email: '' });
+    } catch (err) {
+      setError('Failed to submit. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -40,8 +40,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">{"Digicon AI Systems"}</h1>
-            <button 
-              onClick={() => setShowAuditForm(true)} 
+            <button
+              onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
             >
               {"Get Audit"}
@@ -54,7 +54,8 @@ export default function Home() {
       <div className="pt-32 pb-20 px-6">
         <div className="max-w-6xl mx-auto text-center">
           <h2 className="text-6xl md:text-7xl font-extrabold mb-6">
-            {"AI-Powered "}<span className="text-orange-500">{"Payroll Audit"}</span>
+            {"AI-Powered "}
+            <span className="text-orange-500">{"Payroll Audit"}</span>
           </h2>
           <p className="text-xl text-gray-400 mb-16 max-w-3xl mx-auto">
             {"Uncover hidden savings in minutes. Our AI finds overpayments, errors, and compliance risks in your payroll data."}
@@ -87,7 +88,7 @@ export default function Home() {
               </div>
             </div>
 
-            <button 
+            <button
               onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-16 py-5 rounded-xl text-2xl font-bold transition-all hover:scale-105"
             >
@@ -147,118 +148,98 @@ export default function Home() {
       {/* Audit Form Modal */}
       {showAuditForm ? (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
-           {!isSuccess ? (
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          
-          <div className="bg-gray-900 border-2 border-orange-500 rounded-2xl p-10 max-w-md w-full">
-            <h3 className="text-3xl font-bold mb-6 text-center">{"Request Your Audit"}</h3>
-            <p className="text-gray-400 mb-8 text-center">{"We'll contact you in 24 hours"}</p>
-            <div className="space-y-4">
- <input type="text" placeholder="Company Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>              <input type="text" placeholder="Your Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>
- <input type="text" placeholder="Your Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>              <button className="w-full bg-orange-500 hover:bg-orange-600 text-black py-4 rounded-lg font-bold text-lg transition">{"Submit Request"}</button>
-               <input type="email" placeholder="Email Address" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>
-              <button onClick={() => setShowAuditForm(false)} className="w-full text-gray-400 hover:text-white transition">{"Cancel"}</button>
-                            </form>
-    ) : (            <div className="text-center space-y-4">
-                                            <h3 className="text-2xl font-bold mb-4">Success!</h3>
-                                            <p className="text-gray-300 mb-6">Thank you for your request. We're sending a secure private portal link to your email. You'll use this link to upload your documents and receive your personalized audit report. We'll contact you in 24 hours.</p>
-                                            <button onClick={() => { setIsSuccess(false); setShowAuditForm(false); }} className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-3 rounded-lg font-semibold transition">Close</button>
-                                          </div>
-    )}            
+          {!isSuccess ? (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="bg-gray-900 border-2 border-orange-500 rounded-2xl p-10 max-w-md w-full">
+                <h3 className="text-3xl font-bold mb-6 text-center">{"Request Your Audit"}</h3>
+                <p className="text-gray-400 mb-8 text-center">{"We'll contact you in 24 hours"}</p>
+                <div className="space-y-4">
+                  {error && <p className="text-red-400 text-sm">{error}</p>}
+                  <input
+                    type="text"
+                    placeholder="Company Name"
+                    value={formData.companyName}
+                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
+                    className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Your Name"
+                    value={formData.contactName}
+                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
+                    className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email Address"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-lg font-semibold transition"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Submitting...' : 'Request Audit'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAuditForm(false)}
+                    className="w-full text-gray-400 hover:text-white transition"
+                  >
+                    {"Cancel"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          ) : (
+            <div className="bg-gray-900 border-2 border-orange-500 rounded-2xl p-10 max-w-md w-full text-center space-y-4">
+              <h3 className="text-2xl font-bold mb-4">Success!</h3>
+              <p className="text-gray-300 mb-6">
+                Thank you for your request. We're sending a secure private portal link to your email. You'll use this link to upload your payroll data securely.
+              </p>
+              <button
+                onClick={() => {
+                  setIsSuccess(false);
+                  setShowAuditForm(false);
+                }}
+                className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-3 rounded-lg font-semibold"
+              >
+                {"Close"}
+              </button>
             </div>
-          </div>
+          )}
         </div>
-      )}
+      ) : null}
 
-          
-    {/* Our Audit Services */}
-    <div className="py-20 px-6 bg-gradient-to-b from-black to-gray-900">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="text-4xl font-bold text-center mb-4">Our Audit Services</h2>
-        <p className="text-xl text-gray-400 text-center mb-16">Comprehensive payroll analysis covering all critical areas</p>
-        
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Audit 1 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">1</span>
-              </div>
-              <h3 className="text-xl font-bold">Overpayments & Duplicates</h3>
-            </div>
-            <p className="text-gray-400">Identify duplicate payments, overpayments, and wage errors that drain company resources</p>
-          </div>
+      {/* Our Audit Services */}
+      <div className="py-20 px-6 bg-gradient-to-b from-black to-gray-900">
+        <div className="max-w-6xl mx-auto">
+          <h2 className="text-4xl font-bold text-center mb-4">Our Audit Services</h2>
+          <p className="text-xl text-gray-400 text-center mb-16">Comprehensive payroll analysis covering all critical areas</p>
 
-          {/* Audit 2 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">2</span>
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Audit 1 */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                  <span className="text-white font-bold text-xl">1</span>
+                </div>
+                <h3 className="text-xl font-bold">Overpayments & Duplicates</h3>
               </div>
-              <h3 className="text-xl font-bold">Payroll Calculation Errors</h3>
+              <p className="text-gray-400">Identify duplicate payments, overpayments, and wage errors that drain company resources</p>
             </div>
-            <p className="text-gray-400">Detect incorrect calculations in gross pay, deductions, taxes, and net pay processing</p>
-          </div>
 
-          {/* Audit 3 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">3</span>
+            {/* Audit 2 */}
+            <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                  <span className="text-white font-bold text-xl">2</span>
+                </div>
+                <h3 className="text-xl font-bold">Payroll Calculation Errors</h3>
               </div>
-              <h3 className="text-xl font-bold">Tax Withholding Issues</h3>
+              <p className="text-gray-400">Detect incorrect calculations in gross pay, deductions, taxes, and net pay processing</p>
             </div>
-            <p className="text-gray-400">Verify federal, state, and local tax compliance and identify withholding discrepancies</p>
-          </div>
 
-          {/* Audit 4 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">4</span>
-              </div>
-              <h3 className="text-xl font-bold">Benefits Compliance</h3>
-            </div>
-            <p className="text-gray-400">Ensure proper handling of benefits deductions, 401k contributions, and insurance premiums</p>
-          </div>
-
-          {/* Audit 5 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">5</span>
-              </div>
-              <h3 className="text-xl font-bold">Timecard & Attendance</h3>
-            </div>
-            <p className="text-gray-400">Validate hour tracking, overtime calculations, and paid time off (PTO) accuracy</p>
-          </div>
-
-          {/* Audit 6 */}
-          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
-            <div className="flex items-center mb-4">
-              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
-                <span className="text-white font-bold text-xl">6</span>
-              </div>
-              <h3 className="text-xl font-bold">Regulatory Compliance</h3>
-            </div>
-            <p className="text-gray-400">Ensure adherence to DOL, IRS, and state labor laws, including wage and hour regulations</p>
-          </div>
-        </div>
-      </div>
-    </div>
-      {/* Footer */}
-<footer className="border-t border-gray-800 py-8">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-gray-500">© 2025 Digicon AI Systems. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="/privacy" className="text-gray-400 hover:text-orange-500 transition">Privacy Policy</a>
-            <a href="/terms" className="text-gray-400 hover:text-orange-500 transition">Terms of Service</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-      <ChatbotWidget />
-    </div>
-  );
-}
+            {/* Audit 
