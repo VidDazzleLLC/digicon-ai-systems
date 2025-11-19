@@ -174,3 +174,31 @@ export function analyzeCompliance(data: any[]): SystemAnalysisResult {
     confidence: 91,
   };
 }
+
+// Main audit orchestrator
+export async function runAudit(auditData: AuditData): Promise<SystemAnalysisResult> {
+  try {
+    // Route to appropriate analyzer based on system type
+    switch (auditData.systemType) {
+      case 'payroll':
+        return await analyzePayrollWithData(auditData);
+      case 'hrms':
+        return await analyzePayrollWithTogether(auditData);
+      default:
+        return await analyzeCompliance(auditData);
+    }
+  } catch (error) {
+    console.error('Audit execution failed:', error);
+    return {
+      systemType: 'unknown',
+      kpiMetrics: {},
+      wasteReduction: { value: 0, potential: 0 },
+      costSavings: 0,
+      efficiencyGain: 0,
+      errorReduction: 0,
+      speedImprovement: 0,
+      findings: [{ message: 'Audit execution failed', severity: 'critical' }],
+      confidence: 0
+    };
+  }
+}
