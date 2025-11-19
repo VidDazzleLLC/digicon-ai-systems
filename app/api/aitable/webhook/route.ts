@@ -6,9 +6,9 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
 import { prisma } from '@/lib/db';
-import { AITableClient, DATASHEET_IDS } from '@/lib/integrations/aitable';
-import { missionx } from '@/lib/integrations/missionx';
+import { DATASHEETS_IDS } from '@/lib/integrations/aitable';import { missionx } from '@/lib/integrations/missionx';
 
 const WEBHOOK_SECRET = process.env.AITABLE_WEBHOOK_SECRET || '';
 
@@ -17,6 +17,14 @@ const WEBHOOK_SECRET = process.env.AITABLE_WEBHOOK_SECRET || '';
  * 
  * Receives webhooks from AITable automation
  */
+
+// Helper function to verify HMAC signature
+function verifyWebhookSignature(body: any, signature: string, secret: string): boolean {
+  const hmac = crypto.createHmac('sha256', secret);
+  const digest = hmac.update(JSON.stringify(body)).digest('hex');
+  return digest === signature;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get raw body for signature verification
@@ -24,8 +32,7 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('x-aitable-signature') || '';
 
     // Verify webhook signature
-    if (!AITableClient.verifyWebhookSignature(body, signature, WEBHOOK_SECRET)) {
-      console.error('Invalid webhook signature');
+    if (!verifyWebhookSignature(body, signature, WEBHOOK_SECRET)) {      console.error('Invalid webhook signature');
       return NextResponse.json(
         { success: false, error: 'Invalid signature' },
         { status: 401 }
@@ -34,8 +41,7 @@ export async function POST(request: NextRequest) {
 
     // Parse webhook payload
     const payload = JSON.parse(body);
-    const webhook = AITableClient.parseWebhookPayload(payload);
-
+    const webhook = payload;
     console.log('AITable webhook received:', {
       eventType: webhook.eventType,
       datasheetId: webhook.datasheetId,
