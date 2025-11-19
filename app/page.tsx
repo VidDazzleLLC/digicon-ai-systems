@@ -4,6 +4,33 @@ import ChatbotWidget from './components/ChatbotWidget';
 
 export default function Home() {
   const [showAuditForm, setShowAuditForm] = useState(false);
+    const [formData, setFormData] = useState({ companyName: '', contactName: '', email: '' });
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+    const [error, setError] = useState('');
+    const handleSubmit = async (e: React.FormEvent) => {
+          e.preventDefault();
+          if (!formData.companyName || !formData.contactName || !formData.email) {
+                  setError('Please fill in all fields');
+                  return;
+                }
+          setIsLoading(true);
+          setError('');
+          try {
+                  const response = await fetch('/api/audit/request', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(formData),
+                          });
+                  if (!response.ok) throw new Error('Submission failed');
+                  setIsSuccess(true);
+                  setFormData({ companyName: '', contactName: '', email: '' });
+                } catch (err) {
+                  setError('Failed to submit. Please try again.');
+                } finally {
+                  setIsLoading(false);
+                }
+        };
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -119,6 +146,9 @@ export default function Home() {
       {/* Audit Form Modal */}
       {showAuditForm && (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
+           {!isSuccess ? (
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                          
           <div className="bg-gray-900 border-2 border-orange-500 rounded-2xl p-10 max-w-md w-full">
             <h3 className="text-3xl font-bold mb-6 text-center">{"Request Your Audit"}</h3>
             <p className="text-gray-400 mb-8 text-center">{"We'll contact you in 24 hours"}</p>
@@ -128,6 +158,15 @@ export default function Home() {
               <input type="email" placeholder="Email Address" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>
               <button className="w-full bg-orange-500 hover:bg-orange-600 text-black py-4 rounded-lg font-bold text-lg transition">{"Submit Request"}</button>
               <button onClick={() => setShowAuditForm(false)} className="w-full text-gray-400 hover:text-white transition">{"Cancel"}</button>
+                            </form>
+                        ) : (
+                          <div className="text-center space-y-4">
+                                            <h3 className="text-2xl font-bold mb-4">Success!</h3>
+                                            <p className="text-gray-300 mb-6">Thank you for your request. We're sending a secure private portal link to your email. You'll use this link to upload your documents and receive your personalized audit report. We'll contact you in 24 hours.</p>
+                                            <button onClick={() => { setIsSuccess(false); setShowAuditForm(false); }} className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-3 rounded-lg font-semibold transition">Close</button>
+                                          </div>
+                        )}
+            
             </div>
           </div>
         </div>
