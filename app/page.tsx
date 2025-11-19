@@ -42,9 +42,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-white">
       {/* Navigation */}
-      44
-      className="fixed top-0 w-full bg-black border-b border-gray-800 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+    <nav className="fixed top-0 w-full bg-black border-b border-gray-800 z-50">      className="fixed top-0 w-full bg-black border-b border-gray-800 z-50">
+      
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">Digicon AI Systems</h1>
 <a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
