@@ -173,13 +173,94 @@ export default function Home() {
         </div>
       )}
 
-      {/* Footer */}
-      <footer className="border-t border-gray-800 py-8">
-        <div className="max-w-7xl mx-auto px-6 text-center">
-          <p className="text-gray-500">{"© 2025 Digicon AI Systems. All rights reserved."}</p>
-        </div>
-      </footer>
+          
+    {/* Our Audit Services */}
+    <div className="py-20 px-6 bg-gradient-to-b from-black to-gray-900">
+      <div className="max-w-6xl mx-auto">
+        <h2 className="text-4xl font-bold text-center mb-4">Our Audit Services</h2>
+        <p className="text-xl text-gray-400 text-center mb-16">Comprehensive payroll analysis covering all critical areas</p>
+        
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Audit 1 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">1</span>
+              </div>
+              <h3 className="text-xl font-bold">Overpayments & Duplicates</h3>
+            </div>
+            <p className="text-gray-400">Identify duplicate payments, overpayments, and wage errors that drain company resources</p>
+          </div>
 
+          {/* Audit 2 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">2</span>
+              </div>
+              <h3 className="text-xl font-bold">Payroll Calculation Errors</h3>
+            </div>
+            <p className="text-gray-400">Detect incorrect calculations in gross pay, deductions, taxes, and net pay processing</p>
+          </div>
+
+          {/* Audit 3 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">3</span>
+              </div>
+              <h3 className="text-xl font-bold">Tax Withholding Issues</h3>
+            </div>
+            <p className="text-gray-400">Verify federal, state, and local tax compliance and identify withholding discrepancies</p>
+          </div>
+
+          {/* Audit 4 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">4</span>
+              </div>
+              <h3 className="text-xl font-bold">Benefits Compliance</h3>
+            </div>
+            <p className="text-gray-400">Ensure proper handling of benefits deductions, 401k contributions, and insurance premiums</p>
+          </div>
+
+          {/* Audit 5 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">5</span>
+              </div>
+              <h3 className="text-xl font-bold">Timecard & Attendance</h3>
+            </div>
+            <p className="text-gray-400">Validate hour tracking, overtime calculations, and paid time off (PTO) accuracy</p>
+          </div>
+
+          {/* Audit 6 */}
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-8 hover:border-orange-500 transition">
+            <div className="flex items-center mb-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center mr-4">
+                <span className="text-white font-bold text-xl">6</span>
+              </div>
+              <h3 className="text-xl font-bold">Regulatory Compliance</h3>
+            </div>
+            <p className="text-gray-400">Ensure adherence to DOL, IRS, and state labor laws, including wage and hour regulations</p>
+          </div>
+        </div>
+      </div>
+    </div>
+      {/* Footer */}
+<footer className="border-t border-gray-800 py-8">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-gray-500">© 2025 Digicon AI Systems. All rights reserved.</p>
+          <div className="flex gap-6">
+            <a href="/privacy" className="text-gray-400 hover:text-orange-500 transition">Privacy Policy</a>
+            <a href="/terms" className="text-gray-400 hover:text-orange-500 transition">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+    </footer>
       <ChatbotWidget />
     </div>
   );
