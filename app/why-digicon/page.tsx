@@ -1,4 +1,3 @@
-'use client';
 
 import WhyDigicon from '../components/WhyDigicon';
 
