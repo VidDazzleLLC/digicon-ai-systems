@@ -145,7 +145,7 @@ export default function Home() {
       </div>
 
       {/* Audit Form Modal */}
-      {showAuditForm && (
+      {showAuditForm ? (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
            {!isSuccess ? (
                         <form onSubmit={handleSubmit} className="space-y-4">
