@@ -129,7 +129,7 @@ async function handleLeadWebhook(
     console.log('Creating MissionX portal for new lead:', leadData.name);
 
     // Create MissionX portal
-    const portal = await missionx.createClientPortal({
+    /* const portal = await missionx.createClientPortal({
       clientName: leadData.name,
       clientEmail: leadData.email,
       portalName: `${leadData.company || leadData.name} - Audit Portal`,
