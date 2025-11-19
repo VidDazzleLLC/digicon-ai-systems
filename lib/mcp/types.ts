@@ -225,18 +225,3 @@ export class MCPError extends Error {
   }
 }
 
-export default {
-  MCPTool,
-  MCPToolResult,
-  MCPServerConfig,
-  ToolRegistryEntry,
-  MCPContext,
-  ToolExecutionContext,
-  FileSystemEntry,
-  MCPResource,
-  MCPPrompt,
-  SandboxOptions,
-  CodeExecutionResult,
-  ToolDiscoveryQuery,
-  MCPError,
-};
