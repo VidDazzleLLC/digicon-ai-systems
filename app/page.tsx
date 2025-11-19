@@ -161,7 +161,7 @@ export default function Home() {
               <button onClick={() => setShowAuditForm(false)} className="w-full text-gray-400 hover:text-white transition">{"Cancel"}</button>
                             </form>
     ) : (
-            <div className="text-center space-y-4"
+            <div className="text-center space-y-4">
                                             <h3 className="text-2xl font-bold mb-4">Success!</h3>
                                             <p className="text-gray-300 mb-6">Thank you for your request. We're sending a secure private portal link to your email. You'll use this link to upload your documents and receive your personalized audit report. We'll contact you in 24 hours.</p>
                                             <button onClick={() => { setIsSuccess(false); setShowAuditForm(false); }} className="bg-orange-500 hover:bg-orange-600 text-black px-8 py-3 rounded-lg font-semibold transition">Close</button>
