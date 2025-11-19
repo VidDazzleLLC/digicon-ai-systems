@@ -1,4 +1,4 @@
-// Build fix: Ensure API route is available - v1.2
+l// Build fix: Ensure API route is available - v1.2
 'use client';
 import { useState } from 'react';
 import ChatbotWidget from './components/ChatbotWidget';
@@ -145,7 +145,7 @@ export default function Home() {
       </div>
 
       {/* Audit Form Modal */}
-      {showAuditForm && (
+      {showAuditForm l (
         <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50 p-6">
            {!isSuccess ? (
                         <form onSubmit={handleSubmit} className="space-y-4">
