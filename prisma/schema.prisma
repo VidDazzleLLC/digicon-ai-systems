@@ -438,3 +438,26 @@ model AITableSync {
   @@index([lastSyncedAt])
   @@unique([recordId, datasheetId])
 }
+
+
+// ===============================================================================
+// AUDIT REQUEST MODEL
+// ===============================================================================
+model AuditRequest {
+  id String @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Request Information
+  companyName String
+  contactName String
+  email String
+
+  // Status
+  status String @default("pending")
+  
+  // Indexes for efficient queries
+  @@index([email])
+  @@index([createdAt])
+  @@index([status])
+}
