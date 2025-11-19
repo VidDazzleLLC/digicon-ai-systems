@@ -43,5 +43,6 @@ const prisma: PrismaClient | undefined = (() => {
   return g.__prismaClient as PrismaClient;
 })();
 
+export { prisma };
 export default prisma;
 export const hasPrisma = Boolean(prisma);
