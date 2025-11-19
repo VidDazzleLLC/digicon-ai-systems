@@ -156,6 +156,7 @@ export default function Home() {
             <div className="space-y-4">
  <input type="text" placeholder="Company Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>              <input type="text" placeholder="Your Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>
  <input type="text" placeholder="Your Name" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>              <button className="w-full bg-orange-500 hover:bg-orange-600 text-black py-4 rounded-lg font-bold text-lg transition">{"Submit Request"}</button>
+               <input type="email" placeholder="Email Address" className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"/>
               <button onClick={() => setShowAuditForm(false)} className="w-full text-gray-400 hover:text-white transition">{"Cancel"}</button>
                             </form>
     ) : (
