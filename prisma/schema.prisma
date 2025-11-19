@@ -410,3 +410,31 @@ enum FileUploadStatus {
   COMPLETED
   FAILED
 }
+
+// ===============================================================================
+// AITABLE.AI CRM SYNCHRONIZATION
+// ===============================================================================
+
+model AITableSync {
+  id            String   @id @default(cuid())
+  recordId      String   // AITable record ID
+  datasheetId   String   // AITable datasheet ID
+  entityType    String   // "lead", "order", "audit_result"
+  entityId      String   // Internal database ID
+  lastSyncedAt  DateTime // Last sync timestamp
+  syncDirection String   // "aitable_to_app", "app_to_aitable"
+  syncStatus    String   // "success", "failed", "pending"
+  errorMessage  String?  // Error details if sync failed
+  retryCount    Int      @default(0)
+  metadata      Json?    // Additional sync metadata
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Indexes for efficient queries
+  @@index([recordId])
+  @@index([entityId])
+  @@index([entityType])
+  @@index([syncStatus])
+  @@index([lastSyncedAt])
+  @@unique([recordId, datasheetId])
+}
