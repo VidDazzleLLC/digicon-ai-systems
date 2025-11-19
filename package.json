@@ -1,6 +1,7 @@
 {
   "name": "digicon-ai-systems",
-"version": "1.0.1",  "private": true,
+"version": "1.0.1",,
+    "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
