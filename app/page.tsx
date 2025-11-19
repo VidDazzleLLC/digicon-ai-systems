@@ -47,9 +47,8 @@ export default function Home() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-orange-500">Digicon AI Systems</h1>
             <button
-<a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
-                           onClick={() => setShowAuditForm(true)}
-              className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
+                 <a href="/why-digicon" className="text-gray-400 hover:text-white transition mr-6">Why Digicon</a>
+                 <button              className="bg-orange-500 hover:bg-orange-600 text-black px-6 py-2 rounded-lg font-semibold transition"
             >
               Get Audit
             </button>
