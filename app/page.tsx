@@ -91,9 +91,9 @@ export default function Home() {
               </div>
             </div>
 
-            51
+           
             
-              onClick={() => setShowAuditForm(true)}
+              <button onClick={() => setShowAuditForm(true)}
               className="bg-orange-500 hover:bg-orange-600 text-black px-16 py-5 rounded-xl text-2xl font-bold transition-all hover:scale-105"
             >
               Claim Your $249 Audit →
@@ -180,9 +180,9 @@ export default function Home() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
                   />
-                  49
+                 
                   
-                    type="submit"
+                    <button type="submit"
                     className="w-full bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-lg font-semibold transition"
                     disabled={isLoading}
                   >
