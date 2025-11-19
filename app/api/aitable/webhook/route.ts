@@ -148,7 +148,9 @@ async function handleLeadWebhook(
     console.log('MissionX portal created:', portal.portalUrl);
 
     return { entityId: portal.portalId };
-  } else if (eventType === 'record.updated' && record) {
+    */
+  /* TODO: Implement MissionX integration
+} else if (eventType === 'record.updated' && record) {
     // Lead updated - sync changes if needed
     console.log('Lead updated:', webhook.recordId);
     
