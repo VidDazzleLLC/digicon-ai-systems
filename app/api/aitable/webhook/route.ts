@@ -8,7 +8,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 import { prisma } from '@/lib/db';
-import { DATASHEETS_IDS } from '@/lib/integrations/aitable';import { missionx } from '@/lib/integrations/missionx';
 
 const WEBHOOK_SECRET = process.env.AITABLE_WEBHOOK_SECRET || '';
 
