@@ -52,7 +52,7 @@ export default function Home() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-                Digicon AI Systems™
+                Digicon AI Systems
               </h1>
             </div>
             <div className="flex space-x-4">
