@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "prisma:generate": "prisma generate",
+    "prebuild": "npm run prisma:generate",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
