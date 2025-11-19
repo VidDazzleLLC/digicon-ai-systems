@@ -129,7 +129,8 @@ async function handleLeadWebhook(
     console.log('Creating MissionX portal for new lead:', leadData.name);
 
     // Create MissionX portal
-    /* const portal = await missionx.createClientPortal({
+        /*
+    const portal = await missionx.createClientPortal({
       clientName: leadData.name,
       clientEmail: leadData.email,
       portalName: `${leadData.company || leadData.name} - Audit Portal`,
@@ -149,7 +150,7 @@ async function handleLeadWebhook(
 
     return { entityId: portal.portalId };
     */
-  /* TODO: Implement MissionX integration
+  // TODO: Implement MissionX integration
 } else if (eventType === 'record.updated' && record) {
     // Lead updated - sync changes if needed
     console.log('Lead updated:', webhook.recordId);
