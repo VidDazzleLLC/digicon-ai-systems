@@ -82,14 +82,12 @@ export default function Home() {
                 <div className="mb-12 bg-gradient-to-r from-orange-500/20 to-amber-500/20 border-2 border-amber-500/50 rounded-2xl p-8 max-w-4xl mx-auto backdrop-blur-lg shadow-2xl">
                   <div className="text-center">
                     <div className="inline-block bg-amber-500 text-white px-4 py-2 rounded-full text-sm font-bold mb-4">
-                      🔥 BLACK FRIDAY SALE
-                    </div>
+                                          </div>
                     <h3 className="text-4xl font-extrabold text-white mb-2">
                       Payroll Audit <span className="">(One Quarter)</span>
                     </h3>
                     <p className="text-2xl font-bold text-yellow-400 mb-4">
-                      🔥 BLACK FRIDAY SALE<span className="line-through text-gray-500">$2,400</span> <span className="text-5xl font-black ">$249</span> <span className="">90% OFF - While Supplies Last</span>
-                    </p>
+                                          </p>
                     <p className="text-xl text-gray-200 mb-6">
                       Analyze <span className="font-bold ">3 months of payroll data</span> to uncover hidden savings, overpayments, and errors
                     </p>
