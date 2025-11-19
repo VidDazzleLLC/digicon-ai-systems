@@ -1,14 +1,14 @@
 {
   "name": "digicon-ai-systems",
   "version": "1.0.1",
-    "private": true,
+  "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-        "prisma:generate": "prisma generate",
-        "postinstall": "npm run prisma:generate",
+    "prisma:generate": "prisma generate",
+    "postinstall": "npm run prisma:generate"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.69.0",
