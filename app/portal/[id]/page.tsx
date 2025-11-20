@@ -171,30 +171,39 @@ export default function PortalPage() {
               </div>
             </div>
 
-                  {/* Payment verification gate */}
-      {request.status !== 'paid' && (
-        <div className="border-1-4 border-orange-500 p1-4 py-2">
-          <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Required</h2>
-            <p className="text-sm text-gray-600 mb-6">
-              Complete payment to access the audit portal and upload your payroll files.
-            </p>
-            <div className="flex items-center justify-between">
-              <p className="text-2xl font-bold text-gray-900">$249.00 USD</p>
-              <button
-                onClick={handleCheckout}
-                disabled={loading}
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition colors"
-              >
-                {loading ? 'Processing...' : 'Pay Now to Start Audit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  {/* 132
+                  */}
 
-      {/* File upload section - only show if paid */}
-            {request.status === 'paid' && (
+              // Payment verification - show payment UI if not paid
+              if (request.status !== 'paid') {
+                    return (
+                  <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
+                            <div className="max-w-2xl mx-auto">
+                                        <div className="bg-white rounded-lg shadow-lg p-8">
+                                                      <h1 className="text-3xl font-bold text-blue-900 mb-2">Payroll Audit Portal</h1>
+                                                      <p className="text-gray-600 mb-8">Request ID: <span className="font-mono text-gray-900">{request.id}</span></p>
+
+                                                      <div className="border-l-4 border-orange-500 pl-4 py-2">
+                                                                      <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Required</h2>
+                                                                      <p className="text-sm text-gray-600 mb-6">
+                                                                                        Complete payment to access the audit portal and upload your payroll files.
+                                                                                      </p>
+                                                                      <div className="flex items-center justify-between">
+                                                                                        <p className="text-2xl font-bold text-gray-900">$249.00 USD</p>
+                                                                                        <button
+                                                                                                            onClick={handleCheckout}
+                                                                                                            disabled={loading}
+                                                                                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                                                                                                          >
+                                                                                                            {loading ? 'Processing...' : 'Pay Now to Start Audit'}
+                                                                                                          </button>
+                                                                                      </div>
+                                                                    </div>
+                                                    </div>
+                                      </div>
+                          </div>
+                );
+              }
 
             <div className="border-l-4 border-orange-500 pl-4 py-2">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
