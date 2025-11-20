@@ -59,9 +59,13 @@ export async function POST(request: NextRequest) {
     const clientAny = prisma as unknown as Record<string, any>;
 
     let auditRequest: { id: string; [key: string]: any };
+        // Telemetry: Track Prisma model availability for production monitoring
+    const prismaStartTime = Date.now();
+    console.log('[Telemetry] Starting Prisma model detection', { timestamp: prismaStartTime });
 
     if (clientAny && typeof clientAny.auditRequest?.create === 'function') {
       // Use the expected model if available
+            console.log('[Telemetry] Using auditRequest model', { path: 'auditRequest_primary' });
       auditRequest = await clientAny.auditRequest.create({
         data: {
           companyName,
@@ -72,6 +76,7 @@ export async function POST(request: NextRequest) {
       });
     } else if (clientAny && typeof clientAny.request?.create === 'function') {
       // Some schemas may name the model 'Request' or 'request' — try that as a fallback
+          console.log('[Telemetry] Using request model fallback', { path: 'request_fallback' });
       auditRequest = await clientAny.request.create({
         data: {
           companyName,
@@ -84,6 +89,8 @@ export async function POST(request: NextRequest) {
       // Final fallback: do not fail the request at compile time. Create a transient object.
       // This allows the API to be used in dev/test until the Prisma model is created and client regenerated.
       const id = `local_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+          console.log('[Telemetry] Using transient fallback (no Prisma model)', { path: 'transient_fallback', id, warning: 'Prisma model auditRequest not found' });
+      
       auditRequest = {
         id,
         companyName,
@@ -95,6 +102,9 @@ export async function POST(request: NextRequest) {
       console.warn(
         'Prisma model auditRequest not found. Falling back to transient auditRequest. Add the model to prisma/schema.prisma and run `prisma generate` to enable DB persistence.'
       );
+        const prismaEndTime = Date.now();
+  console.log('[Telemetry] Prisma model detection complete', { requestId: auditRequest.id, duration: `${prismaEndTime - prismaStartTime}ms` });
+      
     }
 
 // Send email notification to user with secure portal link
