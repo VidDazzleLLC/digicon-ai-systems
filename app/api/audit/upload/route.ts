@@ -166,8 +166,8 @@ export async function POST(req: NextRequest) {
         customer_email: customerEmail,
         service: 'payroll_audit',
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || baseUrl}/portal/${auditRequest.id}?payment=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
+      success_url: `${baseUrl}/portal/${auditRequest.id}?payment=success`,
+      cancel_url: `${baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
     });
     
     // Update audit request with session ID
