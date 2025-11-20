@@ -196,7 +196,6 @@ export default function PortalPage() {
       {/* File upload section - only show if paid */}
             {request.status === 'paid' && (
 
-            {/* File Upload Section */}
             <div className="border-l-4 border-orange-500 pl-4 py-2">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
               <div className="space-y-4">
@@ -230,8 +229,7 @@ export default function PortalPage() {
                     </button>
                   </div>
                 )}
-                  )}
-
+                  
                 <button
                   onClick={handleUpload}
                   disabled={!file || uploading}
