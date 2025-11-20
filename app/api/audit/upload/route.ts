@@ -91,7 +91,8 @@ export async function POST(req: NextRequest) {
     console.log(`[UPLOAD] Generating audit report...`);
     
     // Call the existing process endpoint to generate the report
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    // Railway sets NEXT_PUBLIC_APP_URL instead of NEXT_PUBLIC_BASE_URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const processResponse = await fetch(
       `${baseUrl}/api/audit/process`, 
       {
@@ -165,8 +166,8 @@ export async function POST(req: NextRequest) {
         customer_email: customerEmail,
         service: 'payroll_audit',
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/portal/${auditRequest.id}?payment=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || baseUrl}/portal/${auditRequest.id}?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
     });
     
     // Update audit request with session ID
