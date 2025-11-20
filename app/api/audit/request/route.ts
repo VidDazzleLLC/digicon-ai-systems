@@ -67,7 +67,6 @@ export async function POST(request: NextRequest) {
           contactName,
           email,
           status: 'pending',
-          submittedAt: new Date(),
         },
       });
     } else if (clientAny && typeof clientAny.request?.create === 'function') {
@@ -78,7 +77,6 @@ export async function POST(request: NextRequest) {
           contactName,
           email,
           status: 'pending',
-          submittedAt: new Date(),
         },
       });
     } else {
@@ -91,7 +89,6 @@ export async function POST(request: NextRequest) {
         contactName,
         email,
         status: 'pending',
-        submittedAt: new Date().toISOString(),
         _transient: true,
       };
       console.warn(
