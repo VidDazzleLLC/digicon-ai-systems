@@ -48,8 +48,7 @@ export async function POST(req: NextRequest) {
     
     // Call process endpoint with CSV data
     const processResponse = await fetch(
-      '/api/audit/process', {,
-      {
+        '/api/audit/process', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
