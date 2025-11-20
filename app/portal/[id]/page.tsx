@@ -194,7 +194,7 @@ export default function PortalPage() {
       )}
 
       {/* File upload section - only show if paid */}
-      {request.status === 'paid' && (
+            {request.status === 'paid' && (
 
             {/* File Upload Section */}
             <div className="border-l-4 border-orange-500 pl-4 py-2">
