@@ -19,7 +19,7 @@ export default function PortalPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const id = params.id as string;
+  const id = (params as { id?: string | string[] })?.id as string;
 
   useEffect(() => {
     const fetchRequest = async () => {
@@ -39,6 +39,9 @@ export default function PortalPage() {
 
     if (id) {
       fetchRequest();
+    } else {
+      setLoading(false);
+      setError('No portal id provided');
     }
   }, [id]);
 
@@ -48,7 +51,7 @@ export default function PortalPage() {
     }
   };
 
-    const handleCheckout = async () => {
+  const handleCheckout = async () => {
     try {
       setLoading(true);
       const res = await fetch('/api/audit/checkout', {
@@ -56,16 +59,18 @@ export default function PortalPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           auditRequestId: id,
-          companyName: request.companyName,
-          customerEmail: request.email
-        })
+          companyName: request?.companyName,
+          customerEmail: request?.email,
+        }),
       });
       const data = await res.json();
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
+      } else {
+        throw new Error('No checkout URL returned');
       }
-    } catch (error) {
-      setError((error as Error).message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -89,7 +94,7 @@ export default function PortalPage() {
         throw new Error('Upload failed');
       }
 
-      const result = await res.json();
+      await res.json();
       alert('File uploaded successfully!');
       setFile(null);
       // Refresh request status
@@ -130,104 +135,108 @@ export default function PortalPage() {
     );
   }
 
-              // Payment verification - show payment UI if not paid
-              if (request.status !== 'paid') {
-                    return (
-                  <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
-                            <div className="max-w-2xl mx-auto">
-                                        <div className="bg-white rounded-lg shadow-lg p-8">
-                                                      <h1 className="text-3xl font-bold text-blue-900 mb-2">Payroll Audit Portal</h1>
-                                                      <p className="text-gray-600 mb-8">Request ID: <span className="font-mono text-gray-900">{request.id}</span></p>
-
-                                                      <div className="border-l-4 border-orange-500 pl-4 py-2">
-                                                                      <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Required</h2>
-                                                                      <p className="text-sm text-gray-600 mb-6">
-                                                                                        Complete payment to access the audit portal and upload your payroll files.
-                                                                                      </p>
-                                                                      <div className="flex items-center justify-between">
-                                                                                        <p className="text-2xl font-bold text-gray-900">$249.00 USD</p>
-                                                                                        <button
-                                                                                                            onClick={handleCheckout}
-                                                                                                            disabled={loading}
-                                                                                                            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-                                                                                                          >
-                                                                                                            {loading ? 'Processing...' : 'Pay Now to Start Audit'}
-                                                                                                          </button>
-                                                                                      </div>
-                                                                    </div>
-                                                    </div>
-                                      </div>
-                          </div>
-                );
-              }
-  
+  // Payment verification - show payment UI if not paid
+  if (request.status !== 'paid') {
     return (
-            <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
-                      <div className="max-w-2xl mx-auto">
-                                  <div className="bg-white rounded-lg shadow-lg p-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
+        <div className="max-w-2xl mx-auto">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h1 className="text-3xl font-bold text-blue-900 mb-2">Payroll Audit Portal</h1>
+            <p className="text-gray-600 mb-8">Request ID: <span className="font-mono text-gray-900">{request.id}</span></p>
 
             <div className="border-l-4 border-orange-500 pl-4 py-2">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
-              <div className="space-y-4">
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
-                  <input
-                    type="file"
-                    onChange={handleFileChange}
-                    className="block w-full text-sm text-gray-500
-                      file:mr-4 file:py-2 file:px-4
-                      file:rounded-lg file:border-0
-                      file:text-sm file:font-semibold
-                      file:bg-blue-50 file:text-blue-700
-                      hover:file:bg-blue-100"
-                    disabled={uploading}
-                  />
-                  <p className="text-xs text-gray-500 mt-2">CSV, XLS, XLSX or PDF (Max 10MB)</p>
-                </div>
-
-                {file && (
-                  <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
-                    <div>
-                      <p className="font-semibold text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-600">{(file.size / 1024).toFixed(2)} KB</p>
-                    </div>
-                    <button
-                      onClick={() => setFile(null)}
-                      className="text-red-600 hover:text-red-800 font-semibold"
-                      disabled={uploading}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                )}
-
-                  
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Required</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                Complete payment to access the audit portal and upload your payroll files.
+              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-2xl font-bold text-gray-900">$249.00 USD</p>
                 <button
-                  onClick={handleUpload}
-                  disabled={!file || uploading}
-                  className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors"
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
                 >
-                  {uploading ? 'Uploading...' : 'Upload File'}
+                  {loading ? 'Processing...' : 'Pay Now to Start Audit'}
                 </button>
               </div>
-            </div>
-
-            {/* Support Info */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
-              <p className="text-sm text-gray-700 mb-3">
-                Our team will analyze your payroll data and contact you within 24 hours with results.
-              </p>
-              <p className="text-sm text-gray-600">
-                Questions? Contact us at <span className="font-semibold">support@digicon.app</span>
-              </p>
             </div>
           </div>
         </div>
       </div>
-    </div>
-                </div>
-              </div>
-            </div>
-  );
+    );
   }
+
+  // Paid: show upload portal
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <h1 className="text-3xl font-bold text-blue-900 mb-2">Payroll Audit Portal</h1>
+          <p className="text-gray-600 mb-8">Request ID: <span className="font-mono text-gray-900">{request.id}</span></p>
+
+          <div className="border-l-4 border-green-500 pl-4 py-2 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Payment Confirmed</h2>
+            <p className="text-sm text-gray-600">
+              Thank you for your payment! Upload your payroll files below to begin the audit.
+            </p>
+          </div>
+
+          <div className="border-l-4 border-orange-500 pl-4 py-2">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
+            <div className="space-y-4">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-lg file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100"
+                  disabled={uploading}
+                />
+                <p className="text-xs text-gray-500 mt-2">CSV, XLS, XLSX or PDF (Max 10MB)</p>
+              </div>
+
+              {file && (
+                <div className="flex items-center justify-between bg-blue-50 p-4 rounded-lg">
+                  <div>
+                    <p className="font-semibold text-gray-900">{file.name}</p>
+                    <p className="text-sm text-gray-600">{(file.size / 1024).toFixed(2)} KB</p>
+                  </div>
+                  <button
+                    onClick={() => setFile(null)}
+                    className="text-red-600 hover:text-red-800 font-semibold"
+                    disabled={uploading}
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={handleUpload}
+                disabled={!file || uploading}
+                className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors"
+              >
+                {uploading ? 'Uploading...' : 'Upload File'}
+              </button>
+            </div>
+          </div>
+
+          {/* Support Info */}
+          <div className="bg-gray-50 p-4 rounded-lg mt-6">
+            <h3 className="font-semibold text-gray-900 mb-2">Need Help?</h3>
+            <p className="text-sm text-gray-700 mb-3">
+              Our team will analyze your payroll data and contact you within 24 hours with results.
+            </p>
+            <p className="text-sm text-gray-600">
+              Questions? Contact us at <span className="font-semibold">support@digicon.app</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
