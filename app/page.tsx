@@ -8,6 +8,8 @@ type FormData = {
   file: File | null;
 };
 
+const DEFAULT_COMPANY_NAME = 'Not Provided';
+
 export default function Home() {
   const [showAuditForm, setShowAuditForm] = useState(false);
   const [formData, setFormData] = useState<FormData>({ companyName: '', email: '', file: null });
@@ -30,7 +32,7 @@ export default function Home() {
       const uploadData = new FormData();
       uploadData.append('file', formData.file);
       uploadData.append('email', formData.email);
-      uploadData.append('companyName', formData.companyName || 'Not Provided');
+      uploadData.append('companyName', formData.companyName || DEFAULT_COMPANY_NAME);
       
       // POST to upload endpoint
       const response = await fetch('/api/audit/upload', {
@@ -47,8 +49,10 @@ export default function Home() {
       // Check for checkoutUrl in response
       if (result.checkoutUrl) {
         // Redirect to Stripe checkout
+        // Note: We don't reset loading state here because redirect will navigate away
         window.location.assign(result.checkoutUrl);
       } else {
+        setIsLoading(false);
         throw new Error('No checkout URL returned from server');
       }
     } catch (err: any) {
@@ -188,6 +192,7 @@ export default function Home() {
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setFormData({ ...formData, file });
+                        setError(''); // Clear any previous error when selecting a new file
                       }}
                       className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 focus:border-orange-500 focus:outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-black hover:file:bg-orange-600"
                       disabled={isLoading}
