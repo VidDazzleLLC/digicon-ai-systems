@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     
     // Call process endpoint with CSV data
     const processResponse = await fetch(
-      new URL('/api/audit/process', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+      '/api/audit/process', {,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
