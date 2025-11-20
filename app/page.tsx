@@ -4,37 +4,55 @@ import ChatbotWidget from './components/ChatbotWidget';
 
 type FormData = {
   companyName: string;
-  contactName: string;
   email: string;
+  file: File | null;
 };
 
 export default function Home() {
   const [showAuditForm, setShowAuditForm] = useState(false);
-  const [formData, setFormData] = useState<FormData>({ companyName: '', contactName: '', email: '' });
+  const [formData, setFormData] = useState<FormData>({ companyName: '', email: '', file: null });
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!formData.companyName || !formData.contactName || !formData.email) {
-      setError('Please fill in all fields');
+    if (!formData.file || !formData.email) {
+      setError('Please upload a file and provide your email');
       return;
     }
+    
     setIsLoading(true);
     setError('');
+    
     try {
-      const response = await fetch('/api/audit/request', {
+      // Build FormData object
+      const uploadData = new FormData();
+      uploadData.append('file', formData.file);
+      uploadData.append('email', formData.email);
+      uploadData.append('companyName', formData.companyName || 'Not Provided');
+      
+      // POST to upload endpoint
+      const response = await fetch('/api/audit/upload', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: uploadData, // multipart/form-data, no Content-Type header needed
       });
-      if (!response.ok) throw new Error('Submission failed');
-      setIsSuccess(true);
-      setFormData({ companyName: '', contactName: '', email: '' });
-    } catch (err) {
-      setError('Failed to submit. Please try again.');
-    } finally {
+      
+      const result = await response.json();
+      
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || result.message || 'Upload failed');
+      }
+      
+      // Check for checkoutUrl in response
+      if (result.checkoutUrl) {
+        // Redirect to Stripe checkout
+        window.location.assign(result.checkoutUrl);
+      } else {
+        throw new Error('No checkout URL returned from server');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to upload file. Please try again.');
       setIsLoading(false);
     }
   };
@@ -154,43 +172,68 @@ export default function Home() {
           {!isSuccess ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="bg-gray-900 border-2 border-orange-500 rounded-2xl p-10 max-w-md w-full">
-                <h3 className="text-3xl font-bold mb-6 text-center">Request Your Audit</h3>
-                <p className="text-gray-400 mb-8 text-center">We'll contact you in 24 hours</p>
+                <h3 className="text-3xl font-bold mb-6 text-center">Upload Your Payroll File</h3>
+                <p className="text-gray-400 mb-8 text-center">Complete payment to receive your audit report</p>
                 <div className="space-y-4">
                   {error && <p className="text-red-400 text-sm">{error}</p>}
+                  
+                  {/* File Upload */}
+                  <div>
+                    <label className="block text-sm text-gray-400 mb-2">
+                      Payroll File <span className="text-orange-500">*</span>
+                    </label>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls,.pdf"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setFormData({ ...formData, file });
+                      }}
+                      className="w-full bg-black border border-gray-700 rounded-lg px-4 py-3 focus:border-orange-500 focus:outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-orange-500 file:text-black hover:file:bg-orange-600"
+                      disabled={isLoading}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.file ? `Selected: ${formData.file.name}` : 'Accepted: CSV, Excel, PDF'}
+                    </p>
+                  </div>
+                  
+                  {/* Company Name */}
                   <input
                     type="text"
-                    placeholder="Company Name"
+                    placeholder="Company Name (optional)"
                     value={formData.companyName}
                     onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                     className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
+                    disabled={isLoading}
                   />
-                  <input
-                    type="text"
-                    placeholder="Your Name"
-                    value={formData.contactName}
-                    onChange={(e) => setFormData({ ...formData, contactName: e.target.value })}
-                    className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
-                  />
+                  
+                  {/* Email */}
                   <input
                     type="email"
-                    placeholder="Email Address"
+                    placeholder="Email Address *"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full bg-black border border-gray-700 rounded-lg px-6 py-4 focus:border-orange-500 focus:outline-none"
+                    required
+                    disabled={isLoading}
                   />
                  
                   
                     <button type="submit"
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-lg font-semibold transition"
+                    className="w-full bg-orange-500 hover:bg-orange-600 text-black px-6 py-3 rounded-lg font-semibold transition disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Submitting...' : 'Request Audit'}
+                    {isLoading ? 'Uploading & Processing...' : 'Upload & Pay $249'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setShowAuditForm(false)}
+                    onClick={() => {
+                      setShowAuditForm(false);
+                      setError('');
+                      setFormData({ companyName: '', email: '', file: null });
+                    }}
                     className="w-full text-gray-400 hover:text-white transition"
+                    disabled={isLoading}
                   >
                     Cancel
                   </button>
