@@ -1,16 +1,16 @@
 /**
- * Prisma Client singleton
- * Ensures only one Prisma client instance exists in development
+ * lib/automation/prisma.ts
+ * 
+ * DEPRECATED: This module now re-exports the canonical Prisma client from lib/db.ts
+ * to ensure a single PrismaClient instance across the entire application.
+ * 
+ * This prevents:
+ * - Connection pool exhaustion
+ * - Memory bloat from multiple instances
+ * - Inconsistent state between modules
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../db';
 
-const globalForPrisma = global as unknown as { prisma: PrismaClient };
-
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
-  });
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export default prisma;
+export { prisma };
