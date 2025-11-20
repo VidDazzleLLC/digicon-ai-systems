@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     const portalLink = `https://digicon-ai-systems-production.up.railway.app/portal/${auditRequest.id}`;
     
     await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'noreply@digicon.app',
       to: email,
       subject: 'Your Digicon AI Payroll Audit Request - Portal Access',
       html: `
