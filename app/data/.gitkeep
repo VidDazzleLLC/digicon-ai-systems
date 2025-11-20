@@ -1,0 +1,5 @@
+# Data Directory
+
+This directory contains runtime-generated audit request data.
+
+The `audit-requests.json` file is automatically created and managed by the audit store module.

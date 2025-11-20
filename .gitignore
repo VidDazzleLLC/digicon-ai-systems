@@ -39,3 +39,8 @@ app/**/*.js
 !next.config.js
 !postcss.config.js
 !tailwind.config.js
+
+# Audit data and reports (runtime generated)
+app/data/audit-requests.json
+app/temp-reports/*.json
+app/temp-reports/*.pdf
