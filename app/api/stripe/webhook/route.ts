@@ -75,6 +75,12 @@ export async function POST(request: NextRequest) {
         break;
       }
 
+      case 'checkout.session.async_payment_succeeded': {
+        // Handle async payments (e.g., bank transfers) - same as checkout completed
+        await handleCheckoutCompleted(event.data.object as Stripe.Checkout.Session);
+        break;
+      }
+
       case 'customer.subscription.created': {
         await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
         break;
@@ -120,13 +126,17 @@ export async function POST(request: NextRequest) {
 
 /**
  * Handle checkout.session.completed
- * Generate API key after successful payment
+ * 
+ * This handler now supports TWO types of checkout sessions:
+ * 1. Payroll Audit payments (new workflow)
+ * 2. API key/subscription payments (existing workflow)
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log('💰 CHECKOUT SESSION COMPLETED');
   console.log(`- Session ID: ${session.id}`);
   console.log(`- Customer: ${session.customer_email}`);
   console.log(`- Amount: ${session.currency?.toUpperCase()} ${((session.amount_total || 0) / 100).toFixed(2)}`);
+  console.log(`- Metadata:`, session.metadata);
 
   const customerEmail = session.customer_email;
   const customerId = session.customer as string;
@@ -136,7 +146,16 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Extract metadata
+  // Check if this is an audit payment (new workflow)
+  const auditRequestId = session.metadata?.auditRequestId;
+  const reportId = session.metadata?.reportId;
+  
+  if (auditRequestId && session.metadata?.service === 'payroll_audit') {
+    await handleAuditPayment(session, auditRequestId, reportId);
+    return;
+  }
+
+  // Otherwise, handle as API key/subscription payment (existing workflow)
   const companyName = session.metadata?.companyName || 'Unknown Company';
   const subscriptionId = session.subscription as string;
 
@@ -183,12 +202,99 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log(`   API Key: ${apiKeyData.apiKey}`);
   console.log(`   Rate Limit: ${apiKeyData.requestsPerDay} requests/day`);
 
-    // Create MissionX client portal
+  // Create MissionX client portal
   await createMissionXClientFromPayment({
     customerEmail,
     companyName,
     stripeCustomerId: customerId,
   });
+}
+
+/**
+ * Handle Audit Payment - New workflow
+ * 
+ * After successful payment:
+ * 1. Mark audit request as paid
+ * 2. Load the report from temp storage
+ * 3. Send the report via email
+ * 4. Mark as delivered
+ */
+async function handleAuditPayment(
+  session: Stripe.Checkout.Session,
+  auditRequestId: string,
+  reportId?: string
+) {
+  console.log('📋 HANDLING AUDIT PAYMENT');
+  console.log(`- Audit Request ID: ${auditRequestId}`);
+  console.log(`- Report ID: ${reportId}`);
+  
+  const { getAuditRequest, markAsPaid, markReportDelivered } = await import('@/lib/audit-store');
+  
+  // Get audit request
+  const auditRequest = await getAuditRequest(auditRequestId);
+  
+  if (!auditRequest) {
+    console.error(`❌ Audit request not found: ${auditRequestId}`);
+    return;
+  }
+  
+  // Check if already paid (idempotency)
+  if (auditRequest.paidAt) {
+    console.log('ℹ️  Audit request already marked as paid');
+    
+    // Check if report was already delivered
+    if (auditRequest.reportDelivered) {
+      console.log('ℹ️  Report already delivered - skipping duplicate delivery');
+      return;
+    }
+  } else {
+    // Mark as paid
+    await markAsPaid(auditRequestId, session.id);
+    console.log(`✅ Marked audit request as paid: ${auditRequestId}`);
+  }
+  
+  // Load report from storage
+  if (!auditRequest.report || !auditRequest.report.filePath) {
+    console.error('❌ Report file path not found in audit request');
+    return;
+  }
+  
+  try {
+    const fs = await import('fs/promises');
+    const reportData = await fs.readFile(auditRequest.report.filePath, 'utf-8');
+    const report = JSON.parse(reportData);
+    
+    console.log('📄 Report loaded successfully');
+    
+    // Send email with report
+    const { sendEmail, generateReportEmailHtml } = await import('@/lib/email-delivery');
+    
+    const emailHtml = generateReportEmailHtml(
+      auditRequest.companyName,
+      report.auditReport,
+      report.reportId
+    );
+    
+    const emailSent = await sendEmail({
+      from: 'noreply@digicon.app',
+      to: auditRequest.customerEmail,
+      subject: `Your Payroll Audit Report - ${auditRequest.companyName}`,
+      html: emailHtml,
+    });
+    
+    if (emailSent) {
+      // Mark as delivered
+      await markReportDelivered(auditRequestId);
+      console.log(`✅ Audit report delivered to ${auditRequest.customerEmail}`);
+    } else {
+      console.error('❌ Failed to send email, but payment was successful');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error delivering report:', error);
+    // Payment was successful, so we don't fail the webhook
+    // The report can be manually delivered later
+  }
 }
 
 /**
@@ -375,6 +481,7 @@ export async function GET() {
     timestamp: new Date().toISOString(),
     events: [
       'checkout.session.completed',
+      'checkout.session.async_payment_succeeded',
       'customer.subscription.created',
       'customer.subscription.updated',
       'customer.subscription.deleted',

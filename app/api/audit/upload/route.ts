@@ -1,14 +1,48 @@
+/**
+ * Audit Upload Endpoint - New Workflow
+ * 
+ * This endpoint implements the updated audit workflow:
+ * 1. Accept payroll file upload (CSV or other formats)
+ * 2. Generate audit report immediately
+ * 3. Store report temporarily
+ * 4. Create Stripe Checkout session ($249)
+ * 5. Return checkout URL to client
+ * 
+ * The report is only emailed after payment is confirmed via webhook.
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
-import { Resend } from 'resend';
+import Stripe from 'stripe';
+import fs from 'fs/promises';
+import path from 'path';
+import { 
+  createAuditRequest, 
+  markReportReady,
+  updateAuditRequest 
+} from '@/lib/audit-store';
 
-// CSV Upload Endpoint - Accepts anonymized company data for audit
+// Initialize Stripe only if API key is available
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
+}
+
 export async function POST(req: NextRequest) {
   try {
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get('file') as File;
-    const requestId = formData.get('requestId') as string;
-    const email = formData.get('email') as string;
+    const companyName = formData.get('companyName') as string;
+    const customerEmail = formData.get('email') as string;
     
     if (!file) {
       return NextResponse.json(
@@ -17,13 +51,22 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Validate file type
+    if (!companyName || !customerEmail) {
+      return NextResponse.json(
+        { error: 'Company name and email are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate file type (accept CSV for now)
     if (!file.name.endsWith('.csv')) {
       return NextResponse.json(
         { error: 'Only CSV files are accepted' },
         { status: 400 }
       );
     }
+    
+    console.log(`[UPLOAD] Processing file upload for ${companyName} (${customerEmail})`);
     
     // Read and parse CSV
     const text = await file.text();
@@ -40,20 +83,22 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Generate upload ID
-    const uploadId = `audit_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create audit request in storage
+    const auditRequest = await createAuditRequest(companyName, customerEmail);
+    console.log(`[UPLOAD] Created audit request: ${auditRequest.id}`);
     
-    // TRIGGER AUDIT PROCESSING IMMEDIATELY
-    console.log(`[AUDIT] Triggering audit processing for uploadId: ${uploadId}`);
+    // Generate audit report
+    console.log(`[UPLOAD] Generating audit report...`);
     
-    // Call process endpoint with CSV data
+    // Call the existing process endpoint to generate the report
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const processResponse = await fetch(
-      '/api/audit/process', 
+      `${baseUrl}/api/audit/process`, 
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          uploadId,
+          uploadId: auditRequest.id,
           systemType: 'payroll',
           csvData: text
         })
@@ -61,67 +106,87 @@ export async function POST(req: NextRequest) {
     );
     
     if (!processResponse.ok) {
-      console.error(`[AUDIT ERROR] Process endpoint failed: ${processResponse.status}`);
+      console.error(`[UPLOAD ERROR] Process endpoint failed: ${processResponse.status}`);
       throw new Error('Audit processing failed');
     }
     
     const auditResult = await processResponse.json();
-    console.log(`[AUDIT] Audit completed successfully for uploadId: ${uploadId}`);
+    console.log(`[UPLOAD] Audit completed successfully`);
     
-    // SEND AUDIT REPORT VIA EMAIL
-    if (email) {
-      try {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        
-        const htmlReport = `
-          <html>
-            <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #FF6B35;">Your Payroll Audit Report</h2>
-              <p>Hello,</p>
-              <p>Your payroll audit has been completed successfully!</p>
-              
-              <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <h3>Audit Findings:</h3>
-                <pre style="white-space: pre-wrap; word-wrap: break-word;">${JSON.stringify(auditResult.auditReport, null, 2)}</pre>
-              </div>
-              
-              <p><strong>Processing Time:</strong> ${auditResult.processingTime}</p>
-              <p><strong>Upload ID:</strong> ${uploadId}</p>
-              
-              <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                <p><strong>Next Steps:</strong></p>
-                <p>Our team will review these findings and contact you within 24 hours with detailed recommendations and implementation strategies.</p>
-              </div>
-              
-              <p>Best regards,<br/>Digicon AI Systems</p>
-            </body>
-          </html>
-        `;
-        
-        await resend.emails.send({
-          from: 'noreply@digicon.app',
-          to: email,
-          subject: `Your Payroll Audit Report - ${uploadId}`,
-          html: htmlReport
-        });
-        
-        console.log(`[EMAIL] Audit report sent successfully to ${email}`);
-      } catch (emailError) {
-        console.error(`[EMAIL ERROR] Failed to send audit report:`, emailError);
-        // Don't fail the request - audit was completed, email is a bonus
-      }
-    }
+    // Store report to temp-reports directory
+    const reportId = `report_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    const reportFileName = `${reportId}.json`;
+    const reportPath = path.join(process.cwd(), 'app', 'temp-reports', reportFileName);
     
-    return NextResponse.json({
-      success: true,
-      uploadId,
+    await fs.writeFile(reportPath, JSON.stringify({
+      reportId,
+      auditRequestId: auditRequest.id,
+      companyName,
+      customerEmail,
+      generatedAt: new Date().toISOString(),
       rowCount: parsed.data.length,
       columns: parsed.meta.fields,
-      message: 'File uploaded and audit processing completed successfully!',
-      auditResult: auditResult.auditReport,
+      auditReport: auditResult.auditReport,
       processingTime: auditResult.processingTime,
-      emailSent: !!email
+    }, null, 2));
+    
+    console.log(`[UPLOAD] Report saved: ${reportFileName}`);
+    
+    // Mark report as ready in audit request
+    await markReportReady(auditRequest.id, {
+      reportId,
+      filePath: reportPath,
+      url: `/temp-reports/${reportFileName}`,
     });
+    
+    // Create Stripe Checkout session
+    console.log('[UPLOAD] Creating Stripe Checkout session...');
+    
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      mode: 'payment',
+      customer_email: customerEmail,
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Digicon AI Systems - Payroll Audit Report',
+              description: `AI-Powered Payroll Audit Service for ${companyName}`,
+            },
+            unit_amount: 24900, // $249.00
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        auditRequestId: auditRequest.id,
+        reportId: reportId,
+        customer_email: customerEmail,
+        service: 'payroll_audit',
+      },
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/portal/${auditRequest.id}?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
+    });
+    
+    // Update audit request with session ID
+    await updateAuditRequest(auditRequest.id, {
+      stripeSessionId: session.id,
+    });
+    
+    console.log(`[UPLOAD] Checkout session created: ${session.id}`);
+    console.log(`[UPLOAD] Checkout URL: ${session.url}`);
+    
+    // Return checkout URL and session info
+    return NextResponse.json({
+      success: true,
+      checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
+      sessionId: session.id,
+      reportId: reportId,
+      auditRequestId: auditRequest.id,
+      message: 'Report generated successfully. Please complete payment to receive your report.',
+    });
+    
   } catch (error: any) {
     console.error('[UPLOAD ERROR]', error);
     return NextResponse.json(

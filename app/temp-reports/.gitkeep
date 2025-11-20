@@ -1,0 +1,5 @@
+# Temporary Reports Directory
+
+This directory stores generated audit reports before payment is confirmed.
+
+Report files are automatically created during the upload process and referenced in the audit request data.

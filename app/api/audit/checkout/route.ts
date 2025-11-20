@@ -2,48 +2,147 @@
  * Stripe Checkout API for Payroll Audit Service
  * 
  * This API creates Stripe checkout sessions for $249 payroll audit service.
+ * 
+ * Updated Workflow:
+ * 1. User uploads payroll files (via /api/audit/upload)
+ * 2. System generates audit report and creates checkout session
+ * 3. Upload endpoint returns checkoutUrl (preferred flow)
+ * 4. OR user can request checkout session via this endpoint (legacy support)
+ * 5. Customer completes payment via Stripe Checkout
+ * 6. Stripe webhook confirms payment
+ * 7. Audit report is emailed to customer
+ * 
  * Features:
  * - Fixed pricing: $249.00 USD
  * - One-time payment collection
- * - Automatic audit request status update on payment
- * - Enables file upload after payment verification
- * 
- * Workflow:
- * 1. User submits audit request via landing page
- * 2. System creates audit request with 'pending' status
- * 3. User redirected to this checkout API
- * 4. Customer completes payment via Stripe Checkout
- * 5. Stripe webhook confirms payment
- * 6. Audit request status updated to 'paid'
- * 7. User can now access portal and upload payroll files
+ * - Returns session.url reliably (with fallback to constructed URL)
+ * - Supports both creating new sessions and retrieving existing ones
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { getAuditRequest, updateAuditRequest } from '@/lib/audit-store';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+// Initialize Stripe only if API key is available
+let stripe: Stripe | null = null;
+if (process.env.STRIPE_SECRET_KEY) {
+  stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    apiVersion: '2025-10-29.clover',
+  });
+}
 
 interface CreateCheckoutRequest {
-  auditRequestId: string;
-  companyName: string;
-  customerEmail: string;
+  auditRequestId?: string;
+  reportId?: string;
+  companyName?: string;
+  customerEmail?: string;
 }
 
 /**
  * Create Stripe Checkout Session for Audit Service
  * POST /api/audit/checkout
+ * 
+ * Supports two modes:
+ * 1. Create new session from auditRequestId (for previously generated reports)
+ * 2. Legacy mode with full details (for backward compatibility)
  */
 export async function POST(request: NextRequest) {
   try {
-    const body: CreateCheckoutRequest = await request.json();
-    const { auditRequestId, companyName, customerEmail } = body;
-
-    // Validate required fields
-    if (!auditRequestId || !companyName || !customerEmail) {
+    if (!stripe) {
       return NextResponse.json(
-        { error: 'Missing required fields: auditRequestId, companyName, customerEmail' },
+        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
+        { status: 500 }
+      );
+    }
+
+    const body: CreateCheckoutRequest = await request.json();
+    const { auditRequestId, reportId, companyName, customerEmail } = body;
+
+    // Mode 1: Create session for existing audit request
+    if (auditRequestId) {
+      const auditRequest = await getAuditRequest(auditRequestId);
+      
+      if (!auditRequest) {
+        return NextResponse.json(
+          { error: 'Audit request not found' },
+          { status: 404 }
+        );
+      }
+      
+      // Check if session already exists
+      if (auditRequest.stripeSessionId) {
+        try {
+          const existingSession = await stripe.checkout.sessions.retrieve(auditRequest.stripeSessionId);
+          
+          // If session is still valid and not expired, return it
+          if (existingSession.status !== 'expired') {
+            console.log(`[CHECKOUT] Returning existing session: ${existingSession.id}`);
+            return NextResponse.json({
+              success: true,
+              checkoutUrl: existingSession.url || `https://checkout.stripe.com/pay/${existingSession.id}`,
+              sessionId: existingSession.id,
+              auditRequestId: auditRequest.id,
+              reportId: auditRequest.report?.reportId,
+              message: 'Using existing checkout session',
+            });
+          }
+        } catch (err) {
+          console.log('[CHECKOUT] Existing session not found or expired, creating new one');
+        }
+      }
+      
+      // Create new session for this audit request
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        customer_email: auditRequest.customerEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Digicon AI Systems - Payroll Audit Report',
+                description: `AI-Powered Payroll Audit Service for ${auditRequest.companyName}`,
+              },
+              unit_amount: 24900, // $249.00
+            },
+            quantity: 1,
+          },
+        ],
+        metadata: {
+          auditRequestId: auditRequest.id,
+          reportId: auditRequest.report?.reportId || '',
+          customer_email: auditRequest.customerEmail,
+          service: 'payroll_audit',
+        },
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal/${auditRequest.id}?payment=success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal/${auditRequest.id}?payment=cancelled`,
+      });
+      
+      // Update audit request with new session ID
+      await updateAuditRequest(auditRequest.id, {
+        stripeSessionId: session.id,
+      });
+      
+      console.log(`[CHECKOUT] Created session for audit request: ${auditRequest.id}`);
+      console.log(`[CHECKOUT] Session ID: ${session.id}`);
+      console.log(`[CHECKOUT] Session URL: ${session.url}`);
+      
+      // Return session.url with fallback
+      return NextResponse.json({
+        success: true,
+        checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
+        sessionId: session.id,
+        auditRequestId: auditRequest.id,
+        reportId: auditRequest.report?.reportId,
+        message: 'Checkout session created successfully',
+      });
+    }
+
+    // Mode 2: Legacy mode - create session with provided details
+    if (!companyName || !customerEmail) {
+      return NextResponse.json(
+        { error: 'Missing required fields: auditRequestId OR (companyName AND customerEmail)' },
         { status: 400 }
       );
     }
@@ -52,8 +151,7 @@ export async function POST(request: NextRequest) {
     const amount = 24900; // $249.00 in cents
     const currency = 'usd';
 
-    console.log('💳 CREATING AUDIT CHECKOUT SESSION:');
-    console.log(`- Audit Request ID: ${auditRequestId}`);
+    console.log('💳 CREATING AUDIT CHECKOUT SESSION (Legacy mode):');
     console.log(`- Company: ${companyName}`);
     console.log(`- Amount: $249.00 USD`);
     console.log(`- Customer Email: ${customerEmail}`);
@@ -77,26 +175,25 @@ export async function POST(request: NextRequest) {
         },
       ],
       metadata: {
-        auditRequestId: auditRequestId,
         companyName: companyName,
         service: 'payroll_audit',
+        reportId: reportId || '',
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal/${auditRequestId}?payment=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal/${auditRequestId}?payment=cancelled`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=cancelled`,
     });
 
     console.log('✅ AUDIT CHECKOUT SESSION CREATED:');
     console.log(`- Session ID: ${session.id}`);
     console.log(`- Checkout URL: ${session.url}`);
 
-    // Return checkout URL
+    // Return checkout URL with fallback
     return NextResponse.json({
       success: true,
-      checkoutUrl: session.url,
+      checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
       sessionId: session.id,
       amount: amount,
       currency: currency,
-      auditRequestId: auditRequestId,
       message: 'Checkout session created successfully'
     });
   } catch (error) {
@@ -117,6 +214,13 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    if (!stripe) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured. Please set STRIPE_SECRET_KEY environment variable.' },
+        { status: 500 }
+      );
+    }
+
     const searchParams = request.nextUrl.searchParams;
     const sessionId = searchParams.get('session_id');
 
