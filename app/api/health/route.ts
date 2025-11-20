@@ -1,44 +1,49 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { execSync } from 'child_process';
-
-let migrationAttempted = false;
+import prisma from '@/lib/db';
 
 /**
  * Health check endpoint
- * Also runs Prisma migrations on first call to ensure database schema is ready
+ * Returns server status and optionally checks database connectivity
  */
 export async function GET(request: NextRequest) {
   try {
-    // Run migrations once on first health check
-    if (!migrationAttempted) {
-      migrationAttempted = true;
-      console.log('[Health] Running Prisma migrations...');
-      
+    const response: {
+      status: string;
+      timestamp: string;
+      message: string;
+      database?: string;
+    } = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      message: 'Server is healthy'
+    };
+
+    // Check database connectivity if Prisma client is available
+    if (prisma) {
       try {
-        execSync('npx prisma migrate deploy', {
-          stdio: 'inherit',
-          env: { ...process.env }
-        });
-        console.log('[Health] Migrations completed successfully');
-      } catch (migrationError) {
-        console.error('[Health] Migration error:', migrationError);
-        // Continue anyway - migrations might already be applied
+        // Simple query to check database connection
+        await prisma.$queryRaw`SELECT 1`;
+        response.database = 'connected';
+      } catch (dbError) {
+        console.error('[Health] Database connection error:', dbError);
+        response.database = 'disconnected';
+        response.status = 'degraded';
+        response.message = 'Server is running but database is unavailable';
       }
+    } else {
+      response.database = 'not_configured';
     }
     
     return NextResponse.json(
-      { 
-        status: 'ok',
-        timestamp: new Date().toISOString(),
-        message: 'Server is healthy'
-      },
-      { status: 200 }
+      response,
+      { status: response.status === 'ok' ? 200 : 503 }
     );
   } catch (error) {
     console.error('[Health] Health check error:', error);
     return NextResponse.json(
       { 
         status: 'error',
+        timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }
