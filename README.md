@@ -112,3 +112,6 @@ Proprietary - All Rights Reserved
 <!-- Deployment trigger: Nov 18, 2025 10:50 PM CST - Form submission API deployment -->
 
 For enterprise inquiries: contact@digicon.ai
+
+
+<!-- Build trigger: Triggering GitHub Actions workflow rebuild after YAML syntax fix -->
