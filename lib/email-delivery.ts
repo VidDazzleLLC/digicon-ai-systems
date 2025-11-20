@@ -41,7 +41,7 @@ export async function sendEmail(config: EmailConfig): Promise<boolean> {
       // Use SMTP configuration
       const transporter = nodemailer.createTransport({
         host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT!),
+        port: parseInt(process.env.SMTP_PORT || '587'),
         secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
         auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
           user: process.env.SMTP_USER,
@@ -83,6 +83,22 @@ export function generateReportEmailHtml(
   reportData: any,
   reportId: string
 ): string {
+  // Escape HTML to prevent XSS
+  const escapeHtml = (str: string) => {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+  
+  const safeCompanyName = escapeHtml(companyName);
+  const safeReportId = escapeHtml(reportId);
+  // Convert report data to string and escape
+  const reportString = JSON.stringify(reportData, null, 2);
+  const safeReportData = escapeHtml(reportString);
+  
   return `
     <!DOCTYPE html>
     <html>
@@ -100,14 +116,14 @@ export function generateReportEmailHtml(
       <body>
         <h2>Your Payroll Audit Report</h2>
         <p>Hello,</p>
-        <p>Thank you for your payment. Your payroll audit for <strong>${companyName}</strong> has been completed!</p>
+        <p>Thank you for your payment. Your payroll audit for <strong>${safeCompanyName}</strong> has been completed!</p>
         
         <div class="report-box">
           <h3>Audit Findings:</h3>
-          <pre>${JSON.stringify(reportData, null, 2)}</pre>
+          <pre>${safeReportData}</pre>
         </div>
         
-        <p><strong>Report ID:</strong> ${reportId}</p>
+        <p><strong>Report ID:</strong> ${safeReportId}</p>
         
         <div class="next-steps">
           <p><strong>Next Steps:</strong></p>

@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     console.log(`[UPLOAD] Audit completed successfully`);
     
     // Store report to temp-reports directory
-    const reportId = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const reportId = `report_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     const reportFileName = `${reportId}.json`;
     const reportPath = path.join(process.cwd(), 'app', 'temp-reports', reportFileName);
     
