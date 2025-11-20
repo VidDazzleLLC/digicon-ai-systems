@@ -130,50 +130,6 @@ export default function PortalPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <h1 className="text-3xl font-bold text-blue-900 mb-2">Payroll Audit Portal</h1>
-          <p className="text-gray-600 mb-8">Request ID: <span className="font-mono text-gray-900">{request.id}</span></p>
-
-          <div className="space-y-6">
-            {/* Request Details */}
-            <div className="border-l-4 border-blue-600 pl-4 py-2">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Request Details</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gray-600">Company Name</p>
-                  <p className="text-lg font-semibold text-gray-900">{request.companyName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Contact Name</p>
-                  <p className="text-lg font-semibold text-gray-900">{request.contactName}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="text-lg font-semibold text-gray-900">{request.email}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <p className="text-lg font-semibold">
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      request.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : request.status === 'completed'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                    </span>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-                  {/* 132
-                  */}
-
               // Payment verification - show payment UI if not paid
               if (request.status !== 'paid') {
                     return (
