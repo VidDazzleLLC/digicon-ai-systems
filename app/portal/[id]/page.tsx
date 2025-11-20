@@ -160,6 +160,8 @@ export default function PortalPage() {
                           </div>
                 );
               }
+  
+    return (
 
             <div className="border-l-4 border-orange-500 pl-4 py-2">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
@@ -195,7 +197,6 @@ export default function PortalPage() {
                   </div>
                 )}
 
-                  return (
                   
                 <button
                   onClick={handleUpload}
@@ -222,4 +223,5 @@ export default function PortalPage() {
       </div>
     </div>
   );
+  }
 }
