@@ -81,18 +81,22 @@ export async function POST(request: NextRequest) {
     // Step 2: Calculate waste percentage from the single system audit
     // Extract waste percentage from kpiMetrics
     const kpis = auditResult.kpiMetrics;
-    let avgWastePercent = 0;
-    
-    if (kpis.wasteReduction) {
-      const match = kpis.wasteReduction.match(/\d+/);
-      avgWastePercent = match ? parseFloat(match[0]) : 0;
-    } else if (kpis.costSavings) {
-      const match = kpis.costSavings.match(/\d+/);
-      avgWastePercent = match ? parseFloat(match[0]) : 0;
-    } else if (kpis.errorReduction) {
-      const match = kpis.errorReduction.match(/\d+/);
-      avgWastePercent = match ? parseFloat(match[0]) : 0;
-    }
+    // Helper function for safe string parsing
+  const safeExtractNumber = (value: any): number => {
+    if (typeof value !== 'string') return 0;
+    const match = value.match(/\d+/);
+    return match ? parseFloat(match[0]) : 0;
+  };
+
+  let avgWastePercent = 0;
+  
+  if (kpis.wasteReduction) {
+    avgWastePercent = safeExtractNumber(kpis.wasteReduction);
+  } else if (kpis.costSavings) {
+    avgWastePercent = safeExtractNumber(kpis.costSavings);
+  } else if (kpis.errorReduction) {
+    avgWastePercent = safeExtractNumber(kpis.errorReduction);
+  }
 
     // Step 3: Generate complete pricing proposal with payment plans
     const pricingProposal = generateCompleteProposal(
