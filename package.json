@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",    "lint": "next lint",
-        "start": prisma migrate deploy && next start --port $PORT",
+        "start": next start --port $PORT",
     "prisma:generate": "prisma generate",
     "postinstall": "npm run prisma:generate"
   },
