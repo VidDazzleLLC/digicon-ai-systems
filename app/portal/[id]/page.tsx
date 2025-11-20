@@ -162,6 +162,9 @@ export default function PortalPage() {
               }
   
     return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
+                      <div className="max-w-2xl mx-auto">
+                                  <div className="bg-white rounded-lg shadow-lg p-8">
 
             <div className="border-l-4 border-orange-500 pl-4 py-2">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
@@ -222,6 +225,9 @@ export default function PortalPage() {
         </div>
       </div>
     </div>
+                </div>
+              </div>
+            </div>
   );
   }
 }
