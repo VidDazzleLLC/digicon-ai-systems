@@ -48,6 +48,29 @@ export default function PortalPage() {
     }
   };
 
+    const handleCheckout = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/audit/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          auditRequestId: id,
+          companyName: request.companyName,
+          customerEmail: request.email
+        })
+      });
+      const data = await res.json();
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl;
+      }
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpload = async () => {
     if (!file || !id) return;
 
@@ -148,6 +171,31 @@ export default function PortalPage() {
               </div>
             </div>
 
+                  {/* Payment verification gate */}
+      {request.status !== 'paid' && (
+        <div className="border-1-4 border-orange-500 p1-4 py-2">
+          <div className="bg-white rounded-lg shadow-lg p-8">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Payment Required</h2>
+            <p className="text-sm text-gray-600 mb-6">
+              Complete payment to access the audit portal and upload your payroll files.
+            </p>
+            <div className="flex items-center justify-between">
+              <p className="text-2xl font-bold text-gray-900">$249.00 USD</p>
+              <button
+                onClick={handleCheckout}
+                disabled={loading}
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-6 rounded-lg transition colors"
+              >
+                {loading ? 'Processing...' : 'Pay Now to Start Audit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File upload section - only show if paid */}
+      {request.status === 'paid' && (
+
             {/* File Upload Section */}
             <div className="border-l-4 border-orange-500 pl-4 py-2">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload Payroll Data</h2>
@@ -182,6 +230,7 @@ export default function PortalPage() {
                     </button>
                   </div>
                 )}
+                  )}
 
                 <button
                   onClick={handleUpload}
