@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Resend } from 'resend';
 import { prisma } from '@/lib/db';
 
 interface AuditRequestBody {
@@ -96,10 +97,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Send email notification to user with secure portal link
-    // const portalLink = `https://digicon-ai-systems-production.up.railway.app/portal/${auditRequest.id}`;
-    // Send email with portal link
-
+// Send email notification to user with secure portal link
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    const portalLink = `https://digicon-ai-systems-production.up.railway.app/portal/${auditRequest.id}`;
+    
+    await resend.emails.send({
+      from: 'noreply@digicon.io',
+      to: email,
+      subject: 'Your Digicon AI Payroll Audit Request - Portal Access',
+      html: `
+        <h2>Audit Request Received</h2>
+        <p>Hi ${contactName},</p>
+        <p>We've received your payroll audit request for <strong>${companyName}</strong>.</p>
+        <p>You can access your secure portal and upload your payroll data here:</p>
+        <p><a href="${portalLink}" style="background-color: #FF6B35; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block;">Access Your Portal</a></p>
+        <p>Request ID: <code>${auditRequest.id}</code></p>
+        <p>Our team will analyze your data and contact you within 24 hours.</p>
+        <p>Best regards,<br>Digicon AI Systems</p>
+      `
+    });
+    
+    console.log(`Email sent successfully to ${email}`);
+  } catch (emailError) {
+    console.error('Failed to send email:', emailError);
+    // Don't fail the request - audit request is created, email is bonus
+  }
     return NextResponse.json(
       {
         success: true,
