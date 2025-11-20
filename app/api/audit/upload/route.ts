@@ -175,12 +175,16 @@ export async function POST(req: NextRequest) {
     });
     
     console.log(`[UPLOAD] Checkout session created: ${session.id}`);
-    console.log(`[UPLOAD] Checkout URL: ${session.url}`);
+    console.log(`[UPLOAD] Checkout URL from Stripe: ${session.url}`);
+    
+    // Construct checkout URL with fallback
+    const checkoutUrl = session.url || `https://checkout.stripe.com/pay/${session.id}`;
+    console.log(`[UPLOAD] Final checkout URL: ${checkoutUrl}`);
     
     // Return checkout URL and session info
     return NextResponse.json({
       success: true,
-      checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
+      checkoutUrl,
       sessionId: session.id,
       reportId: reportId,
       auditRequestId: auditRequest.id,
@@ -189,8 +193,13 @@ export async function POST(req: NextRequest) {
     
   } catch (error: any) {
     console.error('[UPLOAD ERROR]', error);
+    console.error('[UPLOAD ERROR] Details:', {
+      message: error.message,
+      stack: error.stack,
+      type: typeof error
+    });
     return NextResponse.json(
-      { error: 'Upload failed', message: error.message },
+      { success: false, error: 'Upload failed', message: error.message },
       { status: 500 }
     );
   }

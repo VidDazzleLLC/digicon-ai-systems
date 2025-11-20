@@ -76,10 +76,12 @@ export async function POST(request: NextRequest) {
           
           // If session is still valid and not expired, return it
           if (existingSession.status !== 'expired') {
+            const checkoutUrl = existingSession.url || `https://checkout.stripe.com/pay/${existingSession.id}`;
             console.log(`[CHECKOUT] Returning existing session: ${existingSession.id}`);
+            console.log(`[CHECKOUT] Checkout URL: ${checkoutUrl}`);
             return NextResponse.json({
               success: true,
-              checkoutUrl: existingSession.url || `https://checkout.stripe.com/pay/${existingSession.id}`,
+              checkoutUrl,
               sessionId: existingSession.id,
               auditRequestId: auditRequest.id,
               reportId: auditRequest.report?.reportId,
@@ -126,12 +128,15 @@ export async function POST(request: NextRequest) {
       
       console.log(`[CHECKOUT] Created session for audit request: ${auditRequest.id}`);
       console.log(`[CHECKOUT] Session ID: ${session.id}`);
-      console.log(`[CHECKOUT] Session URL: ${session.url}`);
+      console.log(`[CHECKOUT] Session URL from Stripe: ${session.url}`);
       
-      // Return session.url with fallback
+      // Construct checkout URL with fallback
+      const checkoutUrl = session.url || `https://checkout.stripe.com/pay/${session.id}`;
+      console.log(`[CHECKOUT] Final checkout URL: ${checkoutUrl}`);
+      
       return NextResponse.json({
         success: true,
-        checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
+        checkoutUrl,
         sessionId: session.id,
         auditRequestId: auditRequest.id,
         reportId: auditRequest.report?.reportId,
@@ -183,14 +188,18 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=cancelled`,
     });
 
-    console.log('✅ AUDIT CHECKOUT SESSION CREATED:');
+    console.log('✅ AUDIT CHECKOUT SESSION CREATED (Legacy mode):');
     console.log(`- Session ID: ${session.id}`);
-    console.log(`- Checkout URL: ${session.url}`);
+    console.log(`- Checkout URL from Stripe: ${session.url}`);
+    
+    // Construct checkout URL with fallback
+    const checkoutUrl = session.url || `https://checkout.stripe.com/pay/${session.id}`;
+    console.log(`- Final checkout URL: ${checkoutUrl}`);
 
     // Return checkout URL with fallback
     return NextResponse.json({
       success: true,
-      checkoutUrl: session.url || `https://checkout.stripe.com/pay/${session.id}`,
+      checkoutUrl,
       sessionId: session.id,
       amount: amount,
       currency: currency,
@@ -198,10 +207,16 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error('💳 AUDIT CHECKOUT ERROR:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      type: typeof error
+    });
     return NextResponse.json(
       { 
         error: 'Failed to create checkout session',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: error instanceof Error ? error.message : 'Unknown error',
+        success: false
       },
       { status: 500 }
     );
