@@ -18,6 +18,57 @@
 
 import prisma from './db';
 
+/**
+ * Helper function to safely parse columns JSON
+ */
+function parseColumns(columnsJson: string | null | undefined): string[] | undefined {
+  if (!columnsJson) return undefined;
+  try {
+    return JSON.parse(columnsJson);
+  } catch (error) {
+    console.error('[AUDIT-STORE] Failed to parse columns JSON:', error);
+    return undefined;
+  }
+}
+
+/**
+ * Helper function to serialize columns to JSON
+ */
+function serializeColumns(columns: string[] | undefined): string | null {
+  if (!columns) return null;
+  try {
+    return JSON.stringify(columns);
+  } catch (error) {
+    console.error('[AUDIT-STORE] Failed to serialize columns:', error);
+    return null;
+  }
+}
+
+/**
+ * Helper function to convert database record to AuditRequest interface
+ */
+function recordToAuditRequest(record: any): AuditRequest {
+  return {
+    id: record.id,
+    companyName: record.companyName,
+    customerEmail: record.customerEmail,
+    status: record.status as 'pending' | 'report_ready' | 'paid',
+    createdAt: record.createdAt.toISOString(),
+    reportDelivered: record.reportDelivered,
+    reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
+    paidAt: record.paidAt?.toISOString(),
+    stripeSessionId: record.stripeSessionId || undefined,
+    csvData: record.csvData || undefined,
+    rowCount: record.rowCount || undefined,
+    columns: parseColumns(record.columns),
+    report: record.reportId ? {
+      reportId: record.reportId,
+      filePath: record.reportFilePath || '',
+      url: record.reportUrl,
+    } : undefined,
+  };
+}
+
 export interface AuditReport {
   reportId: string;
   filePath: string;
@@ -64,25 +115,7 @@ export async function createAuditRequest(
   
   console.log(`[AUDIT-STORE] Created audit request: ${id}`);
   
-  return {
-    id: record.id,
-    companyName: record.companyName,
-    customerEmail: record.customerEmail,
-    status: record.status as 'pending' | 'report_ready' | 'paid',
-    createdAt: record.createdAt.toISOString(),
-    reportDelivered: record.reportDelivered,
-    reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
-    paidAt: record.paidAt?.toISOString(),
-    stripeSessionId: record.stripeSessionId || undefined,
-    csvData: record.csvData || undefined,
-    rowCount: record.rowCount || undefined,
-    columns: record.columns ? JSON.parse(record.columns) : undefined,
-    report: record.reportId ? {
-      reportId: record.reportId,
-      filePath: record.reportFilePath || '',
-      url: record.reportUrl,
-    } : undefined,
-  };
+  return recordToAuditRequest(record);
 }
 
 /**
@@ -101,25 +134,7 @@ export async function getAuditRequest(id: string): Promise<AuditRequest | null> 
     return null;
   }
   
-  return {
-    id: record.id,
-    companyName: record.companyName,
-    customerEmail: record.customerEmail,
-    status: record.status as 'pending' | 'report_ready' | 'paid',
-    createdAt: record.createdAt.toISOString(),
-    reportDelivered: record.reportDelivered,
-    reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
-    paidAt: record.paidAt?.toISOString(),
-    stripeSessionId: record.stripeSessionId || undefined,
-    csvData: record.csvData || undefined,
-    rowCount: record.rowCount || undefined,
-    columns: record.columns ? JSON.parse(record.columns) : undefined,
-    report: record.reportId ? {
-      reportId: record.reportId,
-      filePath: record.reportFilePath || '',
-      url: record.reportUrl,
-    } : undefined,
-  };
+  return recordToAuditRequest(record);
 }
 
 /**
@@ -159,7 +174,7 @@ export async function updateAuditRequest(
       updateData.rowCount = updates.rowCount;
     }
     if (updates.columns !== undefined) {
-      updateData.columns = updates.columns ? JSON.stringify(updates.columns) : null;
+      updateData.columns = serializeColumns(updates.columns);
     }
     if (updates.report !== undefined) {
       updateData.reportId = updates.report.reportId;
@@ -174,25 +189,7 @@ export async function updateAuditRequest(
     
     console.log(`[AUDIT-STORE] Updated audit request: ${id}`, updates);
     
-    return {
-      id: record.id,
-      companyName: record.companyName,
-      customerEmail: record.customerEmail,
-      status: record.status as 'pending' | 'report_ready' | 'paid',
-      createdAt: record.createdAt.toISOString(),
-      reportDelivered: record.reportDelivered,
-      reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
-      paidAt: record.paidAt?.toISOString(),
-      stripeSessionId: record.stripeSessionId || undefined,
-      csvData: record.csvData || undefined,
-      rowCount: record.rowCount || undefined,
-      columns: record.columns ? JSON.parse(record.columns) : undefined,
-      report: record.reportId ? {
-        reportId: record.reportId,
-        filePath: record.reportFilePath || '',
-        url: record.reportUrl,
-      } : undefined,
-    };
+    return recordToAuditRequest(record);
   } catch (error) {
     console.error(`[AUDIT-STORE] Audit request not found: ${id}`, error);
     return null;
@@ -252,23 +249,5 @@ export async function findByStripeSession(sessionId: string): Promise<AuditReque
     return null;
   }
   
-  return {
-    id: record.id,
-    companyName: record.companyName,
-    customerEmail: record.customerEmail,
-    status: record.status as 'pending' | 'report_ready' | 'paid',
-    createdAt: record.createdAt.toISOString(),
-    reportDelivered: record.reportDelivered,
-    reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
-    paidAt: record.paidAt?.toISOString(),
-    stripeSessionId: record.stripeSessionId || undefined,
-    csvData: record.csvData || undefined,
-    rowCount: record.rowCount || undefined,
-    columns: record.columns ? JSON.parse(record.columns) : undefined,
-    report: record.reportId ? {
-      reportId: record.reportId,
-      filePath: record.reportFilePath || '',
-      url: record.reportUrl,
-    } : undefined,
-  };
+  return recordToAuditRequest(record);
 }
