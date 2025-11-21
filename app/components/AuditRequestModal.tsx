@@ -1,10 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 interface AuditRequestModalProps {
   isOpen: boolean;
@@ -83,57 +79,63 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Get Started with Your Payroll Audit</DialogTitle>
-          <DialogDescription>
-            Enter your information and we'll send you a secure portal link.
-          </DialogDescription>
-        </DialogHeader>
+  if (!isOpen) return null;
 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={() => handleDialogOpenChange(false)}>
+      <div className="bg-white rounded-lg shadow-lg max-w-md w-full mx-4 p-6" onClick={(e) => e.stopPropagation()}>
+        <h2 className="text-xl font-semibold mb-2">Get Started with Your Payroll Audit</h2>
+        <p className="text-sm text-gray-600 mb-4">Enter your information and we'll send you a secure portal link.</p>
+        
         {success ? (
           <div className="flex flex-col items-center justify-center py-6 space-y-4">
             <div className="text-5xl">✅</div>
             <div className="text-center space-y-2">
               <h3 className="font-semibold text-lg">Portal Link Sent!</h3>
-              <p className="text-sm text-gray-600">
-                Check your email for the secure portal link.
-              </p>
+              <p className="text-sm text-gray-600">Check your email for the secure portal link.</p>
             </div>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="companyName">Company Name *</Label>
-              <Input
+              <label htmlFor="companyName" className="block text-sm font-medium text-gray-700">
+                Company Name *
+              </label>
+              <input
                 id="companyName"
                 name="companyName"
+                type="text"
                 value={formData.companyName}
                 onChange={handleChange}
                 placeholder="Your company name"
                 required
                 disabled={isLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="personalName">Your Name *</Label>
-              <Input
+              <label htmlFor="personalName" className="block text-sm font-medium text-gray-700">
+                Your Name *
+              </label>
+              <input
                 id="personalName"
                 name="personalName"
+                type="text"
                 value={formData.personalName}
                 onChange={handleChange}
                 placeholder="Your full name"
                 required
                 disabled={isLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address *</Label>
-              <Input
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email Address *
+              </label>
+              <input
                 id="email"
                 name="email"
                 type="email"
@@ -142,6 +144,7 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
                 placeholder="your@email.com"
                 required
                 disabled={isLoading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
               />
             </div>
 
@@ -152,16 +155,16 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
               </div>
             )}
 
-            <Button
+            <button
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isLoading}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Sending...' : 'Send Portal Link'}
-            </Button>
+            </button>
           </form>
         )}
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 }
