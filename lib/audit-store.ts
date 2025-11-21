@@ -17,6 +17,7 @@
  */
 
 import prisma from './db';
+import type { AuditRequest as PrismaAuditRequest } from '@prisma/client';
 
 /**
  * Helper function to safely parse columns JSON
@@ -47,7 +48,7 @@ function serializeColumns(columns: string[] | undefined): string | null {
 /**
  * Helper function to convert database record to AuditRequest interface
  */
-function recordToAuditRequest(record: any): AuditRequest {
+function recordToAuditRequest(record: PrismaAuditRequest): AuditRequest {
   return {
     id: record.id,
     companyName: record.companyName,
@@ -64,7 +65,7 @@ function recordToAuditRequest(record: any): AuditRequest {
     report: record.reportId ? {
       reportId: record.reportId,
       filePath: record.reportFilePath || '',
-      url: record.reportUrl,
+      url: record.reportUrl || undefined,
     } : undefined,
   };
 }
@@ -149,8 +150,20 @@ export async function updateAuditRequest(
   }
 
   try {
-    // Build the update data object
-    const updateData: any = {};
+    // Build the update data object with proper types
+    const updateData: {
+      status?: string;
+      paidAt?: Date | null;
+      stripeSessionId?: string;
+      reportDelivered?: boolean;
+      reportDeliveredAt?: Date | null;
+      csvData?: string;
+      rowCount?: number;
+      columns?: string | null;
+      reportId?: string;
+      reportFilePath?: string;
+      reportUrl?: string | null;
+    } = {};
     
     if (updates.status !== undefined) {
       updateData.status = updates.status;
@@ -179,7 +192,7 @@ export async function updateAuditRequest(
     if (updates.report !== undefined) {
       updateData.reportId = updates.report.reportId;
       updateData.reportFilePath = updates.report.filePath;
-      updateData.reportUrl = updates.report.url || null;
+      updateData.reportUrl = updates.report.url ?? null;
     }
     
     const record = await prisma.auditRequest.update({
