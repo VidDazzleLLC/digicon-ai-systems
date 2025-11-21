@@ -39,6 +39,9 @@ export interface AuditRequest {
   reportDelivered?: boolean;
   reportDeliveredAt?: string;
   stripeSessionId?: string;
+  csvData?: string;
+  rowCount?: number;
+  columns?: string[];
 }
 
 /**
