@@ -1,24 +1,20 @@
 /**
- * Audit Upload Endpoint - New Workflow
+ * Audit Upload Endpoint - Correct Workflow
  * 
  * This endpoint implements the updated audit workflow:
  * 1. Accept payroll file upload (CSV or other formats)
- * 2. Generate audit report immediately
- * 3. Store report temporarily
- * 4. Create Stripe Checkout session ($249)
- * 5. Return checkout URL to client
+ * 2. Validate and store file/data
+ * 3. Create Stripe Checkout session ($249)
+ * 4. Return checkout URL to client
  * 
- * The report is only emailed after payment is confirmed via webhook.
+ * The report is generated and emailed after payment is confirmed via webhook.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import Stripe from 'stripe';
-import fs from 'fs/promises';
-import path from 'path';
 import { 
   createAuditRequest, 
-  markReportReady,
   updateAuditRequest 
 } from '@/lib/audit-store';
 
@@ -83,65 +79,22 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Create audit request in storage
+    // Create audit request in storage with CSV data
     const auditRequest = await createAuditRequest(companyName, customerEmail);
     console.log(`[UPLOAD] Created audit request: ${auditRequest.id}`);
     
-    // Generate audit report
-    console.log(`[UPLOAD] Generating audit report...`);
-    
-    // Call the existing process endpoint to generate the report
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const processResponse = await fetch(
-      `${baseUrl}/api/audit/process`, 
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uploadId: auditRequest.id,
-          systemType: 'payroll',
-          csvData: text
-        })
-      }
-    );
-    
-    if (!processResponse.ok) {
-      console.error(`[UPLOAD ERROR] Process endpoint failed: ${processResponse.status}`);
-      throw new Error('Audit processing failed');
-    }
-    
-    const auditResult = await processResponse.json();
-    console.log(`[UPLOAD] Audit completed successfully`);
-    
-    // Store report to temp-reports directory
-    const reportId = `report_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-    const reportFileName = `${reportId}.json`;
-    const reportPath = path.join(process.cwd(), 'app', 'temp-reports', reportFileName);
-    
-    await fs.writeFile(reportPath, JSON.stringify({
-      reportId,
-      auditRequestId: auditRequest.id,
-      companyName,
-      customerEmail,
-      generatedAt: new Date().toISOString(),
+    // Store CSV data for later processing after payment
+    await updateAuditRequest(auditRequest.id, {
+      csvData: text,
       rowCount: parsed.data.length,
       columns: parsed.meta.fields,
-      auditReport: auditResult.auditReport,
-      processingTime: auditResult.processingTime,
-    }, null, 2));
-    
-    console.log(`[UPLOAD] Report saved: ${reportFileName}`);
-    
-    // Mark report as ready in audit request
-    await markReportReady(auditRequest.id, {
-      reportId,
-      filePath: reportPath,
-      url: `/temp-reports/${reportFileName}`,
     });
+    console.log(`[UPLOAD] Stored CSV data for processing after payment`);
     
     // Create Stripe Checkout session
     console.log('[UPLOAD] Creating Stripe Checkout session...');
     
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -161,7 +114,6 @@ export async function POST(req: NextRequest) {
       ],
       metadata: {
         auditRequestId: auditRequest.id,
-        reportId: reportId,
         customer_email: customerEmail,
         service: 'payroll_audit',
       },
@@ -186,9 +138,8 @@ export async function POST(req: NextRequest) {
       success: true,
       checkoutUrl,
       sessionId: session.id,
-      reportId: reportId,
       auditRequestId: auditRequest.id,
-      message: 'Report generated successfully. Please complete payment to receive your report.',
+      message: 'File uploaded successfully. Please complete payment to receive your audit report.',
     });
     
   } catch (error: any) {
