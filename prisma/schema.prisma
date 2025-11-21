@@ -450,14 +450,32 @@ model AuditRequest {
 
   // Request Information
   companyName String
-  contactName String
-  email String
-
-  // Status
+  customerEmail String
+  
+  // Status - pending | report_ready | paid
   status String @default("pending")
   
+  // Report Information (JSON stored as string or structured fields)
+  reportId String?
+  reportFilePath String?
+  reportUrl String?
+  
+  // Payment Information
+  paidAt DateTime?
+  stripeSessionId String?
+  
+  // Delivery Status
+  reportDelivered Boolean @default(false)
+  reportDeliveredAt DateTime?
+  
+  // CSV Data for processing (stored temporarily until processing)
+  csvData String? // Can store large text in PostgreSQL
+  rowCount Int?
+  columns String? // JSON array as string
+  
   // Indexes for efficient queries
-  @@index([email])
+  @@index([customerEmail])
   @@index([createdAt])
   @@index([status])
+  @@index([stripeSessionId])
 }

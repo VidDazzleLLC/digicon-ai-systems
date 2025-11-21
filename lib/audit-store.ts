@@ -1,8 +1,8 @@
 /**
  * Audit Request Store
  * 
- * Lightweight server-side helper for persisting audit request data.
- * Uses a local JSON file for storage with atomic read/write operations.
+ * Server-side helper for persisting audit request data.
+ * Uses PostgreSQL database via Prisma for reliable storage.
  * 
  * Data Structure:
  * - id: unique identifier
@@ -16,11 +16,59 @@
  * - reportDeliveredAt: timestamp
  */
 
-import fs from 'fs/promises';
-import path from 'path';
+import prisma from './db';
+import type { AuditRequest as PrismaAuditRequest } from '@prisma/client';
 
-const DATA_DIR = path.join(process.cwd(), 'app', 'data');
-const AUDIT_REQUESTS_FILE = path.join(DATA_DIR, 'audit-requests.json');
+/**
+ * Helper function to safely parse columns JSON
+ */
+function parseColumns(columnsJson: string | null | undefined): string[] | undefined {
+  if (!columnsJson) return undefined;
+  try {
+    return JSON.parse(columnsJson);
+  } catch (error) {
+    console.error('[AUDIT-STORE] Failed to parse columns JSON:', error);
+    return undefined;
+  }
+}
+
+/**
+ * Helper function to serialize columns to JSON
+ */
+function serializeColumns(columns: string[] | undefined): string | null {
+  if (!columns) return null;
+  try {
+    return JSON.stringify(columns);
+  } catch (error) {
+    console.error('[AUDIT-STORE] Failed to serialize columns:', error);
+    return null;
+  }
+}
+
+/**
+ * Helper function to convert database record to AuditRequest interface
+ */
+function recordToAuditRequest(record: PrismaAuditRequest): AuditRequest {
+  return {
+    id: record.id,
+    companyName: record.companyName,
+    customerEmail: record.customerEmail,
+    status: record.status as 'pending' | 'report_ready' | 'paid',
+    createdAt: record.createdAt.toISOString(),
+    reportDelivered: record.reportDelivered,
+    reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
+    paidAt: record.paidAt?.toISOString(),
+    stripeSessionId: record.stripeSessionId || undefined,
+    csvData: record.csvData || undefined,
+    rowCount: record.rowCount || undefined,
+    columns: parseColumns(record.columns),
+    report: record.reportId ? {
+      reportId: record.reportId,
+      filePath: record.reportFilePath || '',
+      url: record.reportUrl || undefined,
+    } : undefined,
+  };
+}
 
 export interface AuditReport {
   reportId: string;
@@ -45,85 +93,49 @@ export interface AuditRequest {
 }
 
 /**
- * Initialize storage directory and file if they don't exist
- */
-async function ensureDataDir(): Promise<void> {
-  try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    
-    // Check if file exists
-    try {
-      await fs.access(AUDIT_REQUESTS_FILE);
-    } catch {
-      // File doesn't exist, create it with empty array
-      await fs.writeFile(AUDIT_REQUESTS_FILE, JSON.stringify([], null, 2));
-    }
-  } catch (error) {
-    console.error('Error ensuring data directory:', error);
-    throw error;
-  }
-}
-
-/**
- * Read all audit requests from storage
- */
-async function readAuditRequests(): Promise<AuditRequest[]> {
-  await ensureDataDir();
-  
-  try {
-    const data = await fs.readFile(AUDIT_REQUESTS_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    console.error('Error reading audit requests:', error);
-    return [];
-  }
-}
-
-/**
- * Write audit requests to storage
- */
-async function writeAuditRequests(requests: AuditRequest[]): Promise<void> {
-  await ensureDataDir();
-  
-  try {
-    await fs.writeFile(AUDIT_REQUESTS_FILE, JSON.stringify(requests, null, 2));
-  } catch (error) {
-    console.error('Error writing audit requests:', error);
-    throw error;
-  }
-}
-
-/**
  * Create a new audit request
  */
 export async function createAuditRequest(
   companyName: string,
   customerEmail: string
 ): Promise<AuditRequest> {
+  if (!prisma) {
+    throw new Error('Database not configured');
+  }
+
   const id = `audit_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   
-  const request: AuditRequest = {
-    id,
-    companyName,
-    customerEmail,
-    status: 'pending',
-    createdAt: new Date().toISOString(),
-  };
-  
-  const requests = await readAuditRequests();
-  requests.push(request);
-  await writeAuditRequests(requests);
+  const record = await prisma.auditRequest.create({
+    data: {
+      id,
+      companyName,
+      customerEmail,
+      status: 'pending',
+    },
+  });
   
   console.log(`[AUDIT-STORE] Created audit request: ${id}`);
-  return request;
+  
+  return recordToAuditRequest(record);
 }
 
 /**
  * Get an audit request by ID
  */
 export async function getAuditRequest(id: string): Promise<AuditRequest | null> {
-  const requests = await readAuditRequests();
-  return requests.find(r => r.id === id) || null;
+  if (!prisma) {
+    throw new Error('Database not configured');
+  }
+
+  const record = await prisma.auditRequest.findUnique({
+    where: { id },
+  });
+  
+  if (!record) {
+    return null;
+  }
+  
+  return recordToAuditRequest(record);
 }
 
 /**
@@ -133,19 +145,68 @@ export async function updateAuditRequest(
   id: string,
   updates: Partial<AuditRequest>
 ): Promise<AuditRequest | null> {
-  const requests = await readAuditRequests();
-  const index = requests.findIndex(r => r.id === id);
-  
-  if (index === -1) {
-    console.error(`[AUDIT-STORE] Audit request not found: ${id}`);
+  if (!prisma) {
+    throw new Error('Database not configured');
+  }
+
+  try {
+    // Build the update data object with proper types
+    const updateData: {
+      status?: string;
+      paidAt?: Date | null;
+      stripeSessionId?: string;
+      reportDelivered?: boolean;
+      reportDeliveredAt?: Date | null;
+      csvData?: string;
+      rowCount?: number;
+      columns?: string | null;
+      reportId?: string;
+      reportFilePath?: string;
+      reportUrl?: string | null;
+    } = {};
+    
+    if (updates.status !== undefined) {
+      updateData.status = updates.status;
+    }
+    if (updates.paidAt !== undefined) {
+      updateData.paidAt = updates.paidAt ? new Date(updates.paidAt) : null;
+    }
+    if (updates.stripeSessionId !== undefined) {
+      updateData.stripeSessionId = updates.stripeSessionId;
+    }
+    if (updates.reportDelivered !== undefined) {
+      updateData.reportDelivered = updates.reportDelivered;
+    }
+    if (updates.reportDeliveredAt !== undefined) {
+      updateData.reportDeliveredAt = updates.reportDeliveredAt ? new Date(updates.reportDeliveredAt) : null;
+    }
+    if (updates.csvData !== undefined) {
+      updateData.csvData = updates.csvData;
+    }
+    if (updates.rowCount !== undefined) {
+      updateData.rowCount = updates.rowCount;
+    }
+    if (updates.columns !== undefined) {
+      updateData.columns = serializeColumns(updates.columns);
+    }
+    if (updates.report !== undefined) {
+      updateData.reportId = updates.report.reportId;
+      updateData.reportFilePath = updates.report.filePath;
+      updateData.reportUrl = updates.report.url ?? null;
+    }
+    
+    const record = await prisma.auditRequest.update({
+      where: { id },
+      data: updateData,
+    });
+    
+    console.log(`[AUDIT-STORE] Updated audit request: ${id}`, updates);
+    
+    return recordToAuditRequest(record);
+  } catch (error) {
+    console.error(`[AUDIT-STORE] Audit request not found: ${id}`, error);
     return null;
   }
-  
-  requests[index] = { ...requests[index], ...updates };
-  await writeAuditRequests(requests);
-  
-  console.log(`[AUDIT-STORE] Updated audit request: ${id}`, updates);
-  return requests[index];
 }
 
 /**
@@ -189,6 +250,17 @@ export async function markReportDelivered(id: string): Promise<AuditRequest | nu
  * Find audit request by Stripe session ID
  */
 export async function findByStripeSession(sessionId: string): Promise<AuditRequest | null> {
-  const requests = await readAuditRequests();
-  return requests.find(r => r.stripeSessionId === sessionId) || null;
+  if (!prisma) {
+    throw new Error('Database not configured');
+  }
+
+  const record = await prisma.auditRequest.findFirst({
+    where: { stripeSessionId: sessionId },
+  });
+  
+  if (!record) {
+    return null;
+  }
+  
+  return recordToAuditRequest(record);
 }
