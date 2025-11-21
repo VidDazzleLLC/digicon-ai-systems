@@ -79,9 +79,17 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Create audit request in storage
+    // Create audit request in storage with CSV data
     const auditRequest = await createAuditRequest(companyName, customerEmail);
     console.log(`[UPLOAD] Created audit request: ${auditRequest.id}`);
+    
+    // Store CSV data for later processing after payment
+    await updateAuditRequest(auditRequest.id, {
+      csvData: text,
+      rowCount: parsed.data.length,
+      columns: parsed.meta.fields,
+    } as any);
+    console.log(`[UPLOAD] Stored CSV data for processing after payment`);
     
     // Create Stripe Checkout session
     console.log('[UPLOAD] Creating Stripe Checkout session...');
