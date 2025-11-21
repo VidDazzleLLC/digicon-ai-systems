@@ -203,21 +203,21 @@ export async function POST(request: NextRequest) {
         }
 
               // Handle Audit Payment
-              else if (session.metadata?.auditRequestId) {
+              else if ((session.metadata as any)?.auditRequestId) {
                         console.log('💰 HANDLING AUDIT PAYMENT');
-                        console.log(`- Audit Request ID: ${session.metadata.auditRequestId}`);
+                        console.log(`- Audit Request ID: ${(session.metadata as any).auditRequestId}`);
 
                         // Get audit request from storage
                         const { getAuditRequest, updateAuditRequest } = await import('@/lib/audit-store');
-                        const auditRequest = await getAuditRequest(session.metadata.auditRequestId);
+                        const auditRequest = await getAuditRequest((session.metadata as any).auditRequestId as string);
 
                         if (!auditRequest) {
-                                    console.error(`❌ Audit request ${session.metadata.auditRequestId} not found`);
+                                    console.error(`❌ Audit request ${(session.metadata as any).auditRequestId} not found`);
                                     return;
                                   }
 
                         // Mark as paid
-                        await updateAuditRequest(session.metadata.auditRequestId, { status: 'paid' });
+                        await updateAuditRequest((session.metadata as any).auditRequestId as string, { status: 'paid' });
                         console.log(`✅ MARKED audit request as paid`);
 
                         // Generate report from stored CSV data
@@ -237,10 +237,9 @@ export async function POST(request: NextRequest) {
                                               });
 
                         // Store report ID and update status
-                        const reportId = `report_${Date.now()}_${session.metadata.auditRequestId}`;
-                        await updateAuditRequest(session.metadata.auditRequestId, {
-                                    reportId: reportId,
-                                    status: 'delivered'
+                        const reportId = `report_${Date.now()}_${(session.metadata as any).auditRequestId}`;
+                        await updateAuditRequest((session.metadata as any).auditRequestId as string, {
+                                    status: 'report_ready'
                                               });
                         console.log(`✅ Generated report: ${reportId}`);
 
@@ -252,7 +251,7 @@ export async function POST(request: NextRequest) {
                                     from: 'Digicon AI <noreply@digicon.app>',
                                     to: auditRequest.customerEmail,
                                     subject: 'Your Payroll Audit Report is Ready',
-                                    html: `<h1>Your Audit Report is Complete</h1><p>View your report at ${process.env.NEXT_PUBLIC_APP_URL}/portal/${session.metadata.auditRequestId}</p>`
+                                    html: `<h1>Your Audit Report is Complete</h1><p>View your report at ${process.env.NEXT_PUBLIC_APP_URL}/portal/${(session.metadata as any).auditRequestId}</p>`
                                               });
 
                         console.log(`📧 SENT report email to ${auditRequest.customerEmail}`);
