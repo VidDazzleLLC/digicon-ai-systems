@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface AuditRequestModalProps {
   isOpen: boolean;
@@ -96,7 +95,7 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
 
         {success ? (
           <div className="flex flex-col items-center justify-center py-6 space-y-4">
-            <CheckCircle2 className="h-16 w-16 text-green-500" />
+            <div className="text-5xl">✅</div>
             <div className="text-center space-y-2">
               <h3 className="font-semibold text-lg">Portal Link Sent!</h3>
               <p className="text-sm text-gray-600">
@@ -148,7 +147,7 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
 
             {error && (
               <div className="flex gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-                <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <span className="text-2xl flex-shrink-0">⚠️</span>
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
@@ -158,14 +157,7 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
               className="w-full bg-blue-600 hover:bg-blue-700"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                'Send Portal Link'
-              )}
+              {isLoading ? 'Sending...' : 'Send Portal Link'}
             </Button>
           </form>
         )}
