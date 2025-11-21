@@ -2,12 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
 
 export default function PortalAccessPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
