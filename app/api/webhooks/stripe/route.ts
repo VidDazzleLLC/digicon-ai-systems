@@ -201,6 +201,62 @@ export async function POST(request: NextRequest) {
 
           console.log(`✅ CONFERENCE ROOM ${session.metadata.conferenceRoomId} STATUS UPDATED TO PAID`);
         }
+
+              // Handle Audit Payment
+              else if (session.metadata?.auditRequestId) {
+                        console.log('💰 HANDLING AUDIT PAYMENT');
+                        console.log(`- Audit Request ID: ${session.metadata.auditRequestId}`);
+
+                        // Get audit request from storage
+                        const { getAuditRequest, updateAuditRequest } = await import('@/lib/audit-store');
+                        const auditRequest = await getAuditRequest(session.metadata.auditRequestId);
+
+                        if (!auditRequest) {
+                                    console.error(`❌ Audit request ${session.metadata.auditRequestId} not found`);
+                                    return;
+                                  }
+
+                        // Mark as paid
+                        await updateAuditRequest(session.metadata.auditRequestId, { status: 'paid' });
+                        console.log(`✅ MARKED audit request as paid`);
+
+                        // Generate report from stored CSV data
+                        const { runAudit } = await import('@/lib/audit/analyzers');
+                        const Papa = await import('papaparse');
+
+                        const parsed = Papa.parse(auditRequest.csvData!, {
+                                    header: true,
+                                    skipEmptyLines: true,
+                                    dynamicTyping: true
+                                              });
+
+                        const reportResult = await runAudit({
+                                    systemType: 'payroll',
+                                    rows: parsed.data,
+                                    columns: parsed.meta.fields || []
+                                              });
+
+                        // Store report ID and update status
+                        const reportId = `report_${Date.now()}_${session.metadata.auditRequestId}`;
+                        await updateAuditRequest(session.metadata.auditRequestId, {
+                                    reportId: reportId,
+                                    status: 'delivered'
+                                              });
+                        console.log(`✅ Generated report: ${reportId}`);
+
+                        // Send email with report
+                        const { Resend } = await import('resend');
+                        const resend = new Resend(process.env.RESEND_API_KEY);
+
+                        await resend.emails.send({
+                                    from: 'Digicon AI <noreply@digicon.app>',
+                                    to: auditRequest.customerEmail,
+                                    subject: 'Your Payroll Audit Report is Ready',
+                                    html: `<h1>Your Audit Report is Complete</h1><p>View your report at ${process.env.NEXT_PUBLIC_APP_URL}/portal/${session.metadata.auditRequestId}</p>`
+                                              });
+
+                        console.log(`📧 SENT report email to ${auditRequest.customerEmail}`);
+                      }
         break;
       }
 
