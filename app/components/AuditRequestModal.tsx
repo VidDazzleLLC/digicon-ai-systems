@@ -31,14 +31,14 @@ export function AuditRequestModal({ isOpen, onClose }: AuditRequestModalProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/audit/request-portal-link', {
+      const response = await fetch('/api/audit/request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           companyName: formData.companyName,
-          personalName: formData.personalName,
+          contactName: formData.personalName,
           email: formData.email,
         }),
       });
