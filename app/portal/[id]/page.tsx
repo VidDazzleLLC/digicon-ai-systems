@@ -76,14 +76,16 @@ export default function PortalPage() {
     }
   };
 
-  const handleUpload = async () => {
+  const 79
+    = async () => {
     if (!file || !id) return;
 
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('requestId', id);
+      formData.append('companyName', request?.companyName);
+            formData.append('email', request?.email);
 
       const res = await fetch('/api/audit/upload', {
         method: 'POST',
@@ -216,7 +218,8 @@ export default function PortalPage() {
               )}
 
               <button
-                onClick={handleUpload}
+                onClick={85
+                }
                 disabled={!file || uploading}
                 className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors"
               >
