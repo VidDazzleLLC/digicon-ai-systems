@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         data: {
           companyName,
           contactName,
-          email,
+          customerEmail: email,
           status: 'pending',
         },
       });
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         data: {
           companyName,
           contactName,
-          email,
+          customerEmail: email,
           status: 'pending',
         },
       });
