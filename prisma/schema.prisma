@@ -451,6 +451,7 @@ model AuditRequest {
   // Request Information
   companyName String
   customerEmail String
+  contactName       String
   
   // Status - pending | report_ready | paid
   status String @default("pending")
