@@ -76,8 +76,8 @@ export default function PortalPage() {
     }
   };
 
-  const 79
-    = async () => {
+  const handleUpload = async () => {
+    
     if (!file || !id) return;
 
     setUploading(true);
