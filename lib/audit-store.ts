@@ -53,7 +53,7 @@ function recordToAuditRequest(record: PrismaAuditRequest): AuditRequest {
     id: record.id,
     companyName: record.companyName,
     customerEmail: record.customerEmail,
-    status: record.status as 'pending' | 'report_ready' | 'paid',
+    status: record.status as 'pending' | 'processing' | 'report_ready' | 'paid' | 'completed' | 'failed',
     createdAt: record.createdAt.toISOString(),
     reportDelivered: record.reportDelivered,
     reportDeliveredAt: record.reportDeliveredAt?.toISOString(),
@@ -62,9 +62,15 @@ function recordToAuditRequest(record: PrismaAuditRequest): AuditRequest {
     csvData: record.csvData || undefined,
     rowCount: record.rowCount || undefined,
     columns: parseColumns(record.columns),
+    processingStartedAt: (record as any).processingStartedAt?.toISOString(),
+    processingCompletedAt: (record as any).processingCompletedAt?.toISOString(),
+    processingError: (record as any).processingError || undefined,
+    aiModel: (record as any).aiModel || undefined,
+    processingTimeMs: (record as any).processingTimeMs || undefined,
     report: record.reportId ? {
       reportId: record.reportId,
-      filePath: record.reportFilePath || '',
+      filePath: record.reportFilePath || undefined,
+      reportData: (record as any).reportData || undefined,
       url: record.reportUrl || undefined,
     } : undefined,
   };
@@ -72,7 +78,8 @@ function recordToAuditRequest(record: PrismaAuditRequest): AuditRequest {
 
 export interface AuditReport {
   reportId: string;
-  filePath: string;
+  filePath?: string; // Legacy - kept for backwards compatibility
+  reportData?: any; // New: Full report JSON stored in database
   url?: string;
 }
 
@@ -80,7 +87,7 @@ export interface AuditRequest {
   id: string;
   companyName: string;
   customerEmail: string;
-  status: 'pending' | 'report_ready' | 'paid';
+  status: 'pending' | 'processing' | 'report_ready' | 'paid' | 'completed' | 'failed';
   report?: AuditReport;
   createdAt: string;
   paidAt?: string;
@@ -90,6 +97,11 @@ export interface AuditRequest {
   csvData?: string;
   rowCount?: number;
   columns?: string[];
+  processingStartedAt?: string;
+  processingCompletedAt?: string;
+  processingError?: string;
+  aiModel?: string;
+  processingTimeMs?: number;
 }
 
 /**
@@ -162,9 +174,15 @@ export async function updateAuditRequest(
       columns?: string | null;
       reportId?: string;
       reportFilePath?: string;
+      reportData?: any;
       reportUrl?: string | null;
+      processingStartedAt?: Date | null;
+      processingCompletedAt?: Date | null;
+      processingError?: string | null;
+      aiModel?: string;
+      processingTimeMs?: number;
     } = {};
-    
+
     if (updates.status !== undefined) {
       updateData.status = updates.status;
     }
@@ -189,19 +207,35 @@ export async function updateAuditRequest(
     if (updates.columns !== undefined) {
       updateData.columns = serializeColumns(updates.columns);
     }
+    if (updates.processingStartedAt !== undefined) {
+      updateData.processingStartedAt = updates.processingStartedAt ? new Date(updates.processingStartedAt) : null;
+    }
+    if (updates.processingCompletedAt !== undefined) {
+      updateData.processingCompletedAt = updates.processingCompletedAt ? new Date(updates.processingCompletedAt) : null;
+    }
+    if (updates.processingError !== undefined) {
+      updateData.processingError = updates.processingError || null;
+    }
+    if (updates.aiModel !== undefined) {
+      updateData.aiModel = updates.aiModel;
+    }
+    if (updates.processingTimeMs !== undefined) {
+      updateData.processingTimeMs = updates.processingTimeMs;
+    }
     if (updates.report !== undefined) {
       updateData.reportId = updates.report.reportId;
-      updateData.reportFilePath = updates.report.filePath;
+      updateData.reportFilePath = updates.report.filePath || null;
+      updateData.reportData = updates.report.reportData || null;
       updateData.reportUrl = updates.report.url ?? null;
     }
-    
+
     const record = await prisma.auditRequest.update({
       where: { id },
       data: updateData,
     });
-    
-    console.log(`[AUDIT-STORE] Updated audit request: ${id}`, updates);
-    
+
+    console.log(`[AUDIT-STORE] Updated audit request: ${id}`, { ...updates, csvData: updates.csvData ? '[REDACTED]' : undefined });
+
     return recordToAuditRequest(record);
   } catch (error) {
     console.error(`[AUDIT-STORE] Audit request not found: ${id}`, error);

@@ -452,28 +452,38 @@ model AuditRequest {
   companyName String
   customerEmail String
   contactName       String?
-  
-  // Status - pending | report_ready | paid
+
+  // Status - pending | processing | report_ready | paid | completed | failed
   status String @default("pending")
-  
-  // Report Information (JSON stored as string or structured fields)
+
+  // Report Information - Store JSON directly in database (Railway-safe)
   reportId String?
-  reportFilePath String?
+  reportData Json? // Full report stored as JSON (no filesystem dependency)
   reportUrl String?
-  
+
+  // Legacy fields (keeping for backwards compatibility)
+  reportFilePath String?
+
   // Payment Information
   paidAt DateTime?
   stripeSessionId String?
-  
+
   // Delivery Status
   reportDelivered Boolean @default(false)
   reportDeliveredAt DateTime?
-  
+
   // CSV Data for processing (stored temporarily until processing)
   csvData String? // Can store large text in PostgreSQL
   rowCount Int?
   columns String? // JSON array as string
-  
+
+  // Processing metadata
+  processingStartedAt DateTime?
+  processingCompletedAt DateTime?
+  processingError String?
+  aiModel String? // Track which AI model was used
+  processingTimeMs Int? // Processing duration in milliseconds
+
   // Indexes for efficient queries
   @@index([customerEmail])
   @@index([createdAt])

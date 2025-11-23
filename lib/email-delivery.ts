@@ -19,60 +19,93 @@ export interface EmailConfig {
 }
 
 /**
- * Send email using configured transport
+ * Send email using configured transport with retry logic
  */
-export async function sendEmail(config: EmailConfig): Promise<boolean> {
+export async function sendEmail(config: EmailConfig, retries = 2): Promise<boolean> {
   // Check if email configuration is available
   const hasSmtp = process.env.SMTP_HOST && process.env.SMTP_PORT;
   const hasResend = process.env.RESEND_API_KEY;
-  
+
   if (!hasSmtp && !hasResend) {
-    // No email configuration - log instead
-    console.log('[EMAIL FALLBACK] No email configuration found. Would have sent:');
-    console.log(`  From: ${config.from}`);
-    console.log(`  To: ${config.to}`);
-    console.log(`  Subject: ${config.subject}`);
-    console.log(`  Body: ${config.html.substring(0, 200)}...`);
-    return true;
+    // No email configuration - log warning and details
+    console.warn('⚠️  [EMAIL] No email provider configured!');
+    console.warn('⚠️  [EMAIL] Set either SMTP_* or RESEND_API_KEY environment variables');
+    console.warn('[EMAIL FALLBACK] Would have sent:');
+    console.warn(`  From: ${config.from}`);
+    console.warn(`  To: ${config.to}`);
+    console.warn(`  Subject: ${config.subject}`);
+    console.warn(`  Body Preview: ${config.html.substring(0, 200)}...`);
+
+    // Return false to indicate email was NOT sent
+    // (changed from returning true which was misleading)
+    return false;
   }
-  
-  try {
-    if (hasSmtp) {
-      // Use SMTP configuration
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
-        auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        } : undefined,
-      });
-      
-      await transporter.sendMail(config);
-      console.log(`[EMAIL] Sent via SMTP to ${config.to}`);
-      return true;
-    } else if (hasResend) {
-      // Use Resend API (already available in the project)
-      const { Resend } = await import('resend');
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      
-      await resend.emails.send({
-        from: config.from,
-        to: config.to,
-        subject: config.subject,
-        html: config.html,
-      });
-      
-      console.log(`[EMAIL] Sent via Resend to ${config.to}`);
-      return true;
+
+  let lastError: Error | null = null;
+
+  // Retry logic
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      if (attempt > 0) {
+        console.log(`[EMAIL] Retry attempt ${attempt}/${retries}...`);
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+
+      if (hasSmtp) {
+        // Use SMTP configuration
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465', // true for 465, false for other ports
+          auth: process.env.SMTP_USER && process.env.SMTP_PASS ? {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          } : undefined,
+          // Increase timeout for Railway
+          connectionTimeout: 30000, // 30 seconds
+          socketTimeout: 30000,
+        });
+
+        const info = await transporter.sendMail(config);
+        console.log(`✅ [EMAIL] Sent via SMTP to ${config.to}`);
+        console.log(`✅ [EMAIL] Message ID: ${info.messageId}`);
+        return true;
+
+      } else if (hasResend) {
+        // Use Resend API (already available in the project)
+        const { Resend } = await import('resend');
+        const resend = new Resend(process.env.RESEND_API_KEY);
+
+        const result = await resend.emails.send({
+          from: config.from,
+          to: config.to,
+          subject: config.subject,
+          html: config.html,
+        });
+
+        console.log(`✅ [EMAIL] Sent via Resend to ${config.to}`);
+        console.log(`✅ [EMAIL] Result:`, result);
+        return true;
+      }
+
+      return false;
+
+    } catch (error) {
+      lastError = error as Error;
+      console.error(`❌ [EMAIL] Attempt ${attempt + 1} failed:`, error);
+
+      // If this was the last attempt, we'll throw below
+      if (attempt === retries) {
+        break;
+      }
     }
-    
-    return false;
-  } catch (error) {
-    console.error('[EMAIL ERROR] Failed to send email:', error);
-    return false;
   }
+
+  // All retries failed
+  console.error(`❌ [EMAIL] All ${retries + 1} attempts failed`);
+  console.error(`❌ [EMAIL] Last error:`, lastError);
+  return false;
 }
 
 /**

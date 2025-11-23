@@ -218,8 +218,7 @@ export default function PortalPage() {
               )}
 
               <button
-                onClick={85
-                }
+                onClick={handleUpload}
                 disabled={!file || uploading}
                 className="w-full bg-orange-500 hover:bg-orange-600 disabled:bg-gray-400 text-white font-semibold py-3 rounded-lg transition-colors"
               >
