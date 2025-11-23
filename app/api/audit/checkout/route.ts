@@ -183,8 +183,9 @@ export async function POST(request: NextRequest) {
         companyName: companyName,
         service: 'payroll_audit',
         reportId: reportId || '',
+        auditRequestId: auditRequestId || '', // Include for webhook processing
       },
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=success`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/portal?payment=cancelled`,
     });
 
