@@ -211,13 +211,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 }
 
 /**
- * Handle Audit Payment - New workflow
- * 
+ * Handle Audit Payment - Complete Workflow
+ *
  * After successful payment:
  * 1. Mark audit request as paid
- * 2. Load the report from temp storage
- * 3. Send the report via email
- * 4. Mark as delivered
+ * 2. Process the CSV data (if not already processed)
+ * 3. Run AI analysis to generate report
+ * 4. Store report in database
+ * 5. Send report via email
+ * 6. Mark as delivered
  */
 async function handleAuditPayment(
   session: Stripe.Checkout.Session,
@@ -226,22 +228,22 @@ async function handleAuditPayment(
 ) {
   console.log('📋 HANDLING AUDIT PAYMENT');
   console.log(`- Audit Request ID: ${auditRequestId}`);
-  console.log(`- Report ID: ${reportId}`);
-  
-  const { getAuditRequest, markAsPaid, markReportDelivered } = await import('@/lib/audit-store');
-  
+  console.log(`- Customer Email: ${session.customer_email}`);
+
+  const { getAuditRequest, updateAuditRequest, markAsPaid, markReportDelivered } = await import('@/lib/audit-store');
+
   // Get audit request
   const auditRequest = await getAuditRequest(auditRequestId);
-  
+
   if (!auditRequest) {
     console.error(`❌ Audit request not found: ${auditRequestId}`);
     return;
   }
-  
+
   // Check if already paid (idempotency)
   if (auditRequest.paidAt) {
     console.log('ℹ️  Audit request already marked as paid');
-    
+
     // Check if report was already delivered
     if (auditRequest.reportDelivered) {
       console.log('ℹ️  Report already delivered - skipping duplicate delivery');
@@ -252,48 +254,127 @@ async function handleAuditPayment(
     await markAsPaid(auditRequestId, session.id);
     console.log(`✅ Marked audit request as paid: ${auditRequestId}`);
   }
-  
-  // Load report from storage
-  if (!auditRequest.report || !auditRequest.report.filePath) {
-    console.error('❌ Report file path not found in audit request');
-    return;
-  }
-  
+
   try {
-    const fs = await import('fs/promises');
-    const reportData = await fs.readFile(auditRequest.report.filePath, 'utf-8');
-    const report = JSON.parse(reportData);
-    
-    console.log('📄 Report loaded successfully');
-    
+    let reportData: any;
+    const startTime = Date.now();
+
+    // Check if report already exists in database
+    if (auditRequest.report && auditRequest.report.reportData) {
+      console.log('📄 Report already exists in database');
+      reportData = auditRequest.report.reportData;
+    } else {
+      // Generate report from stored CSV data
+      console.log('🔄 Generating report from CSV data...');
+
+      if (!auditRequest.csvData) {
+        throw new Error('No CSV data found for processing');
+      }
+
+      // Mark as processing
+      await updateAuditRequest(auditRequestId, {
+        status: 'processing',
+        processingStartedAt: new Date().toISOString(),
+      });
+
+      // Parse CSV and run audit
+      const Papa = await import('papaparse');
+      const { runAudit } = await import('@/lib/audit/analyzers');
+
+      const parsed = Papa.parse(auditRequest.csvData, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: true,
+      });
+
+      console.log(`📊 Processing ${parsed.data.length} rows with ${parsed.meta.fields?.length || 0} columns`);
+
+      // Run AI audit analysis
+      const auditResult = await runAudit({
+        systemType: 'payroll',
+        rows: parsed.data as any[],
+        columns: parsed.meta.fields || [],
+      });
+
+      const processingTime = Date.now() - startTime;
+
+      // Create report object
+      const newReportId = reportId || `report_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+      reportData = {
+        reportId: newReportId,
+        generatedAt: new Date().toISOString(),
+        companyName: auditRequest.companyName,
+        customerEmail: auditRequest.customerEmail,
+        auditResult: auditResult,
+        summary: {
+          totalRows: parsed.data.length,
+          systemType: auditResult.systemType,
+          confidence: auditResult.confidence,
+          processingTimeMs: processingTime,
+        },
+      };
+
+      // Store report in database (Railway-safe)
+      await updateAuditRequest(auditRequestId, {
+        status: 'report_ready',
+        report: {
+          reportId: newReportId,
+          reportData: reportData,
+        },
+        processingCompletedAt: new Date().toISOString(),
+        processingTimeMs: processingTime,
+        aiModel: 'claude-3-5-sonnet-20241022',
+      });
+
+      console.log(`✅ Report generated and stored in database (${processingTime}ms)`);
+    }
+
     // Send email with report
+    console.log('📧 Sending email with report...');
     const { sendEmail, generateReportEmailHtml } = await import('@/lib/email-delivery');
-    
+
     const emailHtml = generateReportEmailHtml(
       auditRequest.companyName,
-      report.auditReport,
-      report.reportId
+      reportData.auditResult || reportData,
+      reportData.reportId
     );
-    
+
     const emailSent = await sendEmail({
-      from: 'noreply@digicon.app',
+      from: process.env.EMAIL_FROM || 'noreply@digicon.app',
       to: auditRequest.customerEmail,
       subject: `Your Payroll Audit Report - ${auditRequest.companyName}`,
       html: emailHtml,
     });
-    
+
     if (emailSent) {
       // Mark as delivered
-      await markReportDelivered(auditRequestId);
+      await updateAuditRequest(auditRequestId, {
+        status: 'completed',
+        reportDelivered: true,
+        reportDeliveredAt: new Date().toISOString(),
+      });
       console.log(`✅ Audit report delivered to ${auditRequest.customerEmail}`);
     } else {
-      console.error('❌ Failed to send email, but payment was successful');
+      // Email failed but report is generated
+      console.warn('⚠️  Email delivery failed, but report was generated and stored');
+      await updateAuditRequest(auditRequestId, {
+        processingError: 'Email delivery failed - report available in database',
+      });
     }
-    
+
   } catch (error) {
-    console.error('❌ Error delivering report:', error);
+    console.error('❌ Error in audit payment workflow:', error);
+
+    // Update request with error
+    await updateAuditRequest(auditRequestId, {
+      status: 'failed',
+      processingError: error instanceof Error ? error.message : 'Unknown error during processing',
+      processingCompletedAt: new Date().toISOString(),
+    });
+
     // Payment was successful, so we don't fail the webhook
-    // The report can be manually delivered later
+    // Admin can manually retry or deliver the report later
+    console.error('⚠️  Payment succeeded but report generation failed. Manual intervention may be required.');
   }
 }
 
