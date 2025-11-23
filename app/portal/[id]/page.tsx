@@ -138,7 +138,10 @@ export default function PortalPage() {
   }
 
   // Payment verification - show payment UI if not paid
-  if (request.status !== 'paid') {
+  // Check paidAt instead of status, since status changes to processing/completed after payment
+  const hasPaid = request.status === 'paid' || request.status === 'processing' || request.status === 'report_ready' || request.status === 'completed';
+
+  if (!hasPaid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
         <div className="max-w-2xl mx-auto">
