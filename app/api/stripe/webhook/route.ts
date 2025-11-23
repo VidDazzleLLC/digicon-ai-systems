@@ -252,6 +252,9 @@ async function handleAuditPayment(
   } else {
     // Mark as paid
     await markAsPaid(auditRequestId, session.id);
+          
+      // Clear checkoutUrl after payment
+      await updateAuditRequest(auditRequestId, { checkoutUrl: null });
     console.log(`✅ Marked audit request as paid: ${auditRequestId}`);
   }
 

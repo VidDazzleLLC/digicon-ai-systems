@@ -64,7 +64,7 @@ export default function PortalPage() {
         }),
       });
       const data = await res.json();
-      if (data.checkoutUrl) {
+      if (data.checkoutUrl && data.status !== 'paid') {
         window.location.href = data.checkoutUrl;
       } else {
         throw new Error('No checkout URL returned');
