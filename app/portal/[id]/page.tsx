@@ -68,9 +68,11 @@ export default function PortalPage() {
             if (data.success && data.session?.payment_status === 'paid') {
               console.log('✅ Payment verified with Stripe');
               setPaymentVerified(true);
+            } else {
+              console.warn('⚠️  Session verification returned non-paid status:', data);
             }
           } catch (err) {
-            console.error('Session verification failed:', err);
+            console.error('❌ Session verification failed:', err);
           }
         }
       };
@@ -96,8 +98,11 @@ export default function PortalPage() {
             setProcessingPayment(false);
             clearInterval(pollInterval);
           } else if (pollCount >= maxPolls) {
-            // Timeout after 30 seconds
-            console.log('⚠️  Webhook timeout, but session verified');
+            // Timeout after 30 seconds - trust URL params and allow access
+            console.log('⚠️  Webhook timeout - trusting payment URL parameters');
+            console.log(`⚠️  Payment status from URL: ${paymentStatus}, Session ID: ${sessionId}`);
+            // Trust that payment was successful based on Stripe redirect
+            setPaymentVerified(true);
             setProcessingPayment(false);
             clearInterval(pollInterval);
           }
