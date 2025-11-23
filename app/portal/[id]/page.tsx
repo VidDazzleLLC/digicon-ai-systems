@@ -161,14 +161,23 @@ export default function PortalPage() {
         throw new Error('Upload failed');
       }
 
-      await res.json();
-      alert('File uploaded successfully!');
-      setFile(null);
-      // Refresh request status
-      const refreshRes = await fetch(`/api/audit/portal/${id}`);
-      if (refreshRes.ok) {
-        const data = await refreshRes.json();
-        setRequest(data);
+      const data = await res.json();
+
+      // Upload endpoint creates a new audit request with checkout session
+      // Redirect to the checkout URL to complete payment
+      if (data.checkoutUrl) {
+        console.log('[UPLOAD] Redirecting to checkout:', data.checkoutUrl);
+        console.log('[UPLOAD] New audit request:', data.auditRequestId);
+        window.location.href = data.checkoutUrl;
+      } else {
+        alert('File uploaded successfully!');
+        setFile(null);
+        // Refresh request status
+        const refreshRes = await fetch(`/api/audit/portal/${id}`);
+        if (refreshRes.ok) {
+          const refreshData = await refreshRes.json();
+          setRequest(refreshData);
+        }
       }
     } catch (err) {
       alert(`Upload failed: ${(err as Error).message}`);
