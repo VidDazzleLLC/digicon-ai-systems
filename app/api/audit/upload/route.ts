@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
         customer_email: customerEmail,
         service: 'payroll_audit',
       },
-      success_url: `${baseUrl}/portal/${auditRequest.id}?payment=success`,
+      success_url: `${baseUrl}/portal/${auditRequest.id}?payment=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${baseUrl}/portal/${auditRequest.id}?payment=cancelled`,
     });
     

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 
 interface AuditRequest {
   id: string;
@@ -9,18 +9,27 @@ interface AuditRequest {
   contactName: string;
   email: string;
   status: string;
+  paidAt?: string;
+  stripeSessionId?: string;
+  reportDelivered?: boolean;
 }
 
 export default function PortalPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const [request, setRequest] = useState<AuditRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [paymentVerified, setPaymentVerified] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   const id = (params as { id?: string | string[] })?.id as string;
+  const paymentStatus = searchParams.get('payment');
+  const sessionId = searchParams.get('session_id');
 
+  // Fetch audit request from database
   useEffect(() => {
     const fetchRequest = async () => {
       try {
@@ -44,6 +53,63 @@ export default function PortalPage() {
       setError('No portal id provided');
     }
   }, [id]);
+
+  // Handle payment success redirect - verify session and poll for webhook
+  useEffect(() => {
+    if (paymentStatus === 'success' && request && !paymentVerified) {
+      setProcessingPayment(true);
+
+      // Verify Stripe session if session_id provided
+      const verifySession = async () => {
+        if (sessionId) {
+          try {
+            const res = await fetch(`/api/audit/checkout?session_id=${sessionId}`);
+            const data = await res.json();
+            if (data.success && data.session?.payment_status === 'paid') {
+              console.log('✅ Payment verified with Stripe');
+              setPaymentVerified(true);
+            }
+          } catch (err) {
+            console.error('Session verification failed:', err);
+          }
+        }
+      };
+
+      verifySession();
+
+      // Poll database for webhook completion
+      let pollCount = 0;
+      const maxPolls = 15; // 30 seconds (15 polls * 2 seconds)
+
+      const pollInterval = setInterval(async () => {
+        pollCount++;
+
+        try {
+          const res = await fetch(`/api/audit/portal/${id}`);
+          const data = await res.json();
+
+          // Check if payment processed (status changed or paidAt set)
+          if (data.status !== 'pending' || data.paidAt) {
+            console.log('✅ Webhook processed, payment confirmed');
+            setRequest(data);
+            setPaymentVerified(true);
+            setProcessingPayment(false);
+            clearInterval(pollInterval);
+          } else if (pollCount >= maxPolls) {
+            // Timeout after 30 seconds
+            console.log('⚠️  Webhook timeout, but session verified');
+            setProcessingPayment(false);
+            clearInterval(pollInterval);
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
+      }, 2000);
+
+      // Cleanup on unmount
+      return () => clearInterval(pollInterval);
+    }
+  }, [paymentStatus, request, id, sessionId, paymentVerified]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -77,15 +143,14 @@ export default function PortalPage() {
   };
 
   const handleUpload = async () => {
-    
     if (!file || !id) return;
 
     setUploading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('companyName', request?.companyName);
-            formData.append('email', request?.email);
+      formData.append('companyName', request?.companyName || '');
+      formData.append('email', request?.email || '');
 
       const res = await fetch('/api/audit/upload', {
         method: 'POST',
@@ -137,10 +202,42 @@ export default function PortalPage() {
     );
   }
 
-  // Payment verification - show payment UI if not paid
-  // Check paidAt instead of status, since status changes to processing/completed after payment
-  const hasPaid = request.status === 'paid' || request.status === 'processing' || request.status === 'report_ready' || request.status === 'completed';
+  // Show processing screen if payment successful but webhook still processing
+  if (processingPayment || (paymentStatus === 'success' && request.status === 'pending' && !paymentVerified)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto mb-6"></div>
+          <h1 className="text-2xl font-bold text-green-600 mb-4">Payment Successful!</h1>
+          <p className="text-gray-700 mb-4">
+            Your payment has been processed successfully.
+          </p>
+          <p className="text-gray-600 text-sm">
+            We're setting up your audit portal... This usually takes just a few seconds.
+          </p>
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <p className="text-sm text-gray-600">
+              <span className="font-semibold">Request ID:</span>
+              <br />
+              <span className="font-mono text-xs">{request.id}</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
+  // Comprehensive payment check - multiple indicators
+  const hasPaid =
+    request.status === 'paid' ||
+    request.status === 'processing' ||
+    request.status === 'report_ready' ||
+    request.status === 'completed' ||
+    !!request.paidAt ||  // Most reliable indicator
+    paymentVerified ||   // Session verified with Stripe
+    (paymentStatus === 'success' && sessionId);  // URL indicates success
+
+  // Payment verification - show payment UI if not paid
   if (!hasPaid) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 p-6">
