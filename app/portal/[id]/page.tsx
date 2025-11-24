@@ -172,41 +172,46 @@ function PortalPageContent() {
     if (!file || !id) return;
 
     setUploading(true);
+    setError(null);
+
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('companyName', request?.companyName || '');
-      formData.append('email', request?.email || '');
+      formData.append('auditRequestId', id);
 
-      const res = await fetch('/api/audit/upload', {
+      console.log('[PORTAL] Uploading file:', file.name);
+
+      const res = await fetch('/api/audit/upload-file', {
         method: 'POST',
         body: formData,
       });
 
       if (!res.ok) {
-        throw new Error('Upload failed');
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Upload failed');
       }
 
       const data = await res.json();
 
-      // Upload endpoint creates a new audit request with checkout session
-      // Redirect to the checkout URL to complete payment
-      if (data.checkoutUrl) {
-        console.log('[UPLOAD] Redirecting to checkout:', data.checkoutUrl);
-        console.log('[UPLOAD] New audit request:', data.auditRequestId);
-        window.location.href = data.checkoutUrl;
-      } else {
-        alert('File uploaded successfully!');
-        setFile(null);
-        // Refresh request status
-        const refreshRes = await fetch(`/api/audit/portal/${id}`);
-        if (refreshRes.ok) {
-          const refreshData = await refreshRes.json();
-          setRequest(refreshData);
-        }
-      }
+      console.log('[PORTAL] Upload successful:', data);
+
+      // Show success message
+      alert(`✅ File uploaded successfully!\n\nYour audit is being processed. You'll receive an email with the report shortly.`);
+
+      setFile(null);
+
+      // Update request status to show processing
+      setRequest({
+        ...request,
+        status: 'processing',
+        originalFileName: file.name,
+        fileUploadedAt: new Date().toISOString(),
+      });
+
     } catch (err) {
-      alert(`Upload failed: ${(err as Error).message}`);
+      console.error('[PORTAL] Upload error:', err);
+      setError(`Upload failed: ${(err as Error).message}`);
+      alert(`❌ Upload failed: ${(err as Error).message}`);
     } finally {
       setUploading(false);
     }
