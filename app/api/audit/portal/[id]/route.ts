@@ -8,6 +8,8 @@ export async function GET(
   try {
     const { id } = params;
     console.log('[API] Fetching audit request:', id);
+    console.log('[API] ID type:', typeof id);
+    console.log('[API] ID length:', id.length);
 
     // Debug: Check if prisma is defined
     console.log('[API] Prisma client defined:', !!prisma);
@@ -27,10 +29,36 @@ export async function GET(
     let auditRequest;
     if (clientAny && typeof clientAny.auditRequest?.findUnique === 'function') {
       console.log('[API] Using auditRequest model');
+
+      // Additional debug: Count total records
+      try {
+        const totalCount = await clientAny.auditRequest.count();
+        console.log('[API] Total audit requests in database:', totalCount);
+
+        // Try to find the first few records to see what IDs exist
+        const sampleRecords = await clientAny.auditRequest.findMany({
+          take: 5,
+          select: { id: true, companyName: true, createdAt: true }
+        });
+        console.log('[API] Sample records:', JSON.stringify(sampleRecords, null, 2));
+      } catch (debugError) {
+        console.error('[API] Debug query error:', debugError);
+      }
+
       auditRequest = await clientAny.auditRequest.findUnique({
         where: { id },
       });
       console.log('[API] Query result:', auditRequest ? 'Found' : 'Not found');
+
+      if (!auditRequest) {
+        // Try finding with trimmed ID in case of whitespace
+        const trimmedId = id.trim();
+        console.log('[API] Trying with trimmed ID:', trimmedId);
+        auditRequest = await clientAny.auditRequest.findUnique({
+          where: { id: trimmedId },
+        });
+        console.log('[API] Trimmed query result:', auditRequest ? 'Found' : 'Not found');
+      }
     } else if (clientAny && typeof clientAny.request?.findUnique === 'function') {
       console.log('[API] Using request model fallback');
       auditRequest = await clientAny.request.findUnique({
