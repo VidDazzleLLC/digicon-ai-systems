@@ -11,9 +11,18 @@ import { sendEmail, generateReportEmailHtml } from '@/lib/email-delivery';
 // Initialize Anthropic Claude client
 let anthropic: Anthropic | null = null;
 if (process.env.ANTHROPIC_API_KEY) {
-  anthropic = new Anthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-  });
+  // Validate API key format
+  const apiKey = process.env.ANTHROPIC_API_KEY.trim();
+  if (!apiKey.startsWith('sk-ant-')) {
+    console.error('[AI-PROCESSOR] ⚠️  ANTHROPIC_API_KEY is set but has invalid format!');
+    console.error('[AI-PROCESSOR] Expected format: sk-ant-api03-...');
+    console.error('[AI-PROCESSOR] Using mock mode instead');
+    anthropic = null;
+  } else {
+    anthropic = new Anthropic({
+      apiKey: apiKey,
+    });
+  }
 }
 
 interface AuditResult {
@@ -157,26 +166,40 @@ Provide your analysis in JSON format with:
   "totalPayroll": <amount>
 }`;
 
-  const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 4096,
-    messages: [{
-      role: 'user',
-      content: prompt
-    }]
-  });
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-3-5-sonnet-20241022',
+      max_tokens: 4096,
+      messages: [{
+        role: 'user',
+        content: prompt
+      }]
+    });
 
-  // Extract JSON from Claude's response
-  const content = message.content[0];
-  if (content.type === 'text') {
-    // Try to parse JSON from the response
-    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+    // Extract JSON from Claude's response
+    const content = message.content[0];
+    if (content.type === 'text') {
+      // Try to parse JSON from the response
+      const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
     }
-  }
 
-  throw new Error('Failed to parse AI response');
+    throw new Error('Failed to parse AI response');
+
+  } catch (error: any) {
+    // Handle authentication errors specifically
+    if (error.status === 401 || error.message?.includes('authentication')) {
+      console.error('[AI-PROCESSOR] ❌ ANTHROPIC_API_KEY is invalid or expired!');
+      console.error('[AI-PROCESSOR] Please check your API key at: https://console.anthropic.com/settings/keys');
+      console.error('[AI-PROCESSOR] Falling back to mock report...');
+      return generateMockReport(csvData);
+    }
+
+    // Re-throw other errors
+    throw error;
+  }
 }
 
 /**
