@@ -167,8 +167,12 @@ Provide your analysis in JSON format with:
 }`;
 
   try {
+    const modelId = 'claude-3-5-sonnet-20240620';
+    console.log(`[AI-PROCESSOR] 🔍 DEBUG: Using model ID: "${modelId}" (length: ${modelId.length})`);
+    console.log(`[AI-PROCESSOR] 🔍 DEBUG: First char code: ${modelId.charCodeAt(0)} (should be 99 for lowercase 'c')`);
+
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20240620',
+      model: modelId,
       max_tokens: 4096,
       messages: [{
         role: 'user',
@@ -189,10 +193,27 @@ Provide your analysis in JSON format with:
     throw new Error('Failed to parse AI response');
 
   } catch (error: any) {
+    // Log full error details for debugging
+    console.error('[AI-PROCESSOR] 🔍 DEBUG: Error details:', {
+      status: error.status,
+      message: error.message,
+      type: error.type,
+      error: error.error,
+      fullError: JSON.stringify(error, null, 2)
+    });
+
     // Handle authentication errors specifically
     if (error.status === 401 || error.message?.includes('authentication')) {
       console.error('[AI-PROCESSOR] ❌ ANTHROPIC_API_KEY is invalid or expired!');
       console.error('[AI-PROCESSOR] Please check your API key at: https://console.anthropic.com/settings/keys');
+      console.error('[AI-PROCESSOR] Falling back to mock report...');
+      return generateMockReport(csvData);
+    }
+
+    // Handle 404 model not found errors
+    if (error.status === 404 || error.message?.includes('not_found')) {
+      console.error('[AI-PROCESSOR] ❌ Model not found! We sent: "claude-3-5-sonnet-20240620"');
+      console.error('[AI-PROCESSOR] Anthropic error:', error.message || error.error?.message);
       console.error('[AI-PROCESSOR] Falling back to mock report...');
       return generateMockReport(csvData);
     }
