@@ -115,19 +115,17 @@ export async function createAuditRequest(
     throw new Error('Database not configured');
   }
 
-  const id = `audit_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-  
+  // Let Prisma generate the ID using @default(cuid()) from schema
   const record = await prisma.auditRequest.create({
     data: {
-      id,
       companyName,
       customerEmail,
       status: 'pending',
     },
   });
-  
-  console.log(`[AUDIT-STORE] Created audit request: ${id}`);
-  
+
+  console.log(`[AUDIT-STORE] Created audit request: ${record.id}`);
+
   return recordToAuditRequest(record);
 }
 
