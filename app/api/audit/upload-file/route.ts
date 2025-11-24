@@ -15,6 +15,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 import { prisma } from '@/lib/db';
 
+// Route segment config for Next.js - allow longer execution time
+// AI analysis can take 30+ seconds
+export const maxDuration = 60; // 60 seconds (max for hobby tier on Vercel)
+export const dynamic = 'force-dynamic'; // Don't cache this route
+
 // Max file size: 10MB
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
@@ -137,20 +142,41 @@ export async function POST(req: NextRequest) {
 
     console.log(`[UPLOAD] File data stored in database for audit ${auditRequestId}`);
 
-    // TODO: Trigger AI analysis in background
-    // For now, we'll process it synchronously
+    // Process AI analysis synchronously
+    // IMPORTANT: We MUST await this in serverless environments.
+    // Fire-and-forget doesn't work because the function terminates after response,
+    // killing the background task before AI analysis completes.
     try {
       // Import AI processor
       const { processAuditRequest } = await import('@/lib/ai/audit-processor');
 
-      // Process in background (don't await)
-      processAuditRequest(auditRequestId).catch((error) => {
-        console.error(`[UPLOAD] Background processing failed for ${auditRequestId}:`, error);
+      console.log(`[UPLOAD] Starting AI analysis for ${auditRequestId}...`);
+
+      // AWAIT the processing - this keeps the connection alive until complete
+      await processAuditRequest(auditRequestId);
+
+      console.log(`[UPLOAD] ✅ AI analysis completed for ${auditRequestId}`);
+    } catch (error) {
+      console.error(`[UPLOAD] ❌ AI processing failed for ${auditRequestId}:`, error);
+      // Update status to failed so user knows what happened
+      await clientAny.auditRequest.update({
+        where: { id: auditRequestId },
+        data: {
+          status: 'failed',
+          processingError: error instanceof Error ? error.message : 'AI processing failed',
+        },
       });
 
-      console.log(`[UPLOAD] AI analysis triggered for ${auditRequestId}`);
-    } catch (error) {
-      console.warn('[UPLOAD] AI processor not available yet:', error);
+      // Return error response to user
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'AI processing failed',
+          message: error instanceof Error ? error.message : 'Unknown error',
+          auditRequestId
+        },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
@@ -159,7 +185,7 @@ export async function POST(req: NextRequest) {
       fileName: file.name,
       fileSize: file.size,
       rowCount: rowCount,
-      message: 'File uploaded successfully. Your audit is being processed.',
+      message: 'File uploaded and analyzed successfully. Check your email for the audit report.',
     });
 
   } catch (error: any) {
