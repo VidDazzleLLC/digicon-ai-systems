@@ -319,7 +319,7 @@ async function handleAuditPayment(
         },
         processingCompletedAt: new Date().toISOString(),
         processingTimeMs: processingTime,
-        aiModel: 'claude-3-5-sonnet-20241022',
+        aiModel: 'claude-3-5-sonnet-20240620',
       });
 
       console.log(`✅ Report generated and stored in database (${processingTime}ms)`);
