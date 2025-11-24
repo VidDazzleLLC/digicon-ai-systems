@@ -82,7 +82,7 @@ export async function processAuditRequest(auditRequestId: string): Promise<void>
         status: 'report_ready',
         processingCompletedAt: new Date(),
         processingTimeMs: Date.now() - startTime,
-        aiModel: 'claude-3-5-sonnet-20241022',
+        aiModel: 'claude-3-5-sonnet-20240620',
       },
     });
 
@@ -168,7 +168,7 @@ Provide your analysis in JSON format with:
 
   try {
     const message = await anthropic.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-sonnet-20240620',
       max_tokens: 4096,
       messages: [{
         role: 'user',

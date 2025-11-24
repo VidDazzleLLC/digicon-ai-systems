@@ -69,7 +69,7 @@ export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnaly
 
   try {
     const response = await client.messages.create({
-      model: 'claude-3-5-sonnet-20241022',
+      model: 'claude-3-5-sonnet-20240620',
       max_tokens: 2048,
       messages: [{ role: 'user', content: prompt }],
     } as any);
