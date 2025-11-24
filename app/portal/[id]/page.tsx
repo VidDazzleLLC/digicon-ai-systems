@@ -200,12 +200,10 @@ function PortalPageContent() {
 
       setFile(null);
 
-      // Update request status to show processing
+      // Update request status to show processing (simple update, no new fields)
       setRequest({
         ...request,
         status: 'processing',
-        originalFileName: file.name,
-        fileUploadedAt: new Date().toISOString(),
       });
 
     } catch (err) {
