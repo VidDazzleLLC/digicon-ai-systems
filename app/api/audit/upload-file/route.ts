@@ -76,13 +76,22 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verify payment status
-    if (auditRequest.status !== 'paid' && !auditRequest.paidAt) {
+    // Verify payment status - SIMPLIFIED: Trust Stripe session
+    const hasPaid =
+      auditRequest.status === 'paid' ||
+      auditRequest.paidAt ||
+      auditRequest.stripeSessionId; // If they have a session ID, they paid
+
+    if (!hasPaid) {
+      console.log(`[UPLOAD] Payment verification failed for audit ${auditRequestId}`);
+      console.log(`[UPLOAD] Status: ${auditRequest.status}, PaidAt: ${auditRequest.paidAt}, SessionId: ${auditRequest.stripeSessionId}`);
       return NextResponse.json(
         { error: 'Payment required before uploading files' },
         { status: 403 }
       );
     }
+
+    console.log(`[UPLOAD] Payment verified for audit ${auditRequestId}`);
 
     // Read and parse file
     const text = await file.text();
