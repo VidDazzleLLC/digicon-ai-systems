@@ -88,6 +88,20 @@ function PortalPageContent() {
 
         try {
           const res = await fetch(`/api/audit/portal/${id}`);
+
+          // If API call fails, check if we should timeout
+          if (!res.ok) {
+            console.warn(`⚠️  API call failed (${res.status}), poll ${pollCount}/${maxPolls}`);
+            if (pollCount >= maxPolls) {
+              console.log('⚠️  Webhook timeout - trusting payment URL parameters');
+              console.log(`⚠️  Payment status from URL: ${paymentStatus}, Session ID: ${sessionId}`);
+              setPaymentVerified(true);
+              setProcessingPayment(false);
+              clearInterval(pollInterval);
+            }
+            return; // Skip this poll and try again
+          }
+
           const data = await res.json();
 
           // Check if payment processed (status changed or paidAt set)
@@ -108,6 +122,13 @@ function PortalPageContent() {
           }
         } catch (err) {
           console.error('Polling error:', err);
+          // On error, still check timeout
+          if (pollCount >= maxPolls) {
+            console.log('⚠️  Polling failed, but trusting payment success from URL');
+            setPaymentVerified(true);
+            setProcessingPayment(false);
+            clearInterval(pollInterval);
+          }
         }
       }, 2000);
 
