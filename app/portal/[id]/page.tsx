@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 
 interface AuditRequest {
@@ -14,7 +14,7 @@ interface AuditRequest {
   reportDelivered?: boolean;
 }
 
-export default function PortalPage() {
+function PortalPageContent() {
   const params = useParams();
   const searchParams = useSearchParams();
   const [request, setRequest] = useState<AuditRequest | null>(null);
@@ -354,5 +354,20 @@ export default function PortalPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PortalPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+          <p className="text-white text-lg">Loading portal...</p>
+        </div>
+      </div>
+    }>
+      <PortalPageContent />
+    </Suspense>
   );
 }
