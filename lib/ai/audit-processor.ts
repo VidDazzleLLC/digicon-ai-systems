@@ -79,20 +79,30 @@ export async function processAuditRequest(auditRequestId: string): Promise<void>
 
     console.log(`[AI-PROCESSOR] Report generated: ${reportId}`);
 
-    // Send report email
-    await sendAuditReport(auditRequest, auditResult, reportId);
+    // Send report email (non-blocking - don't fail if email fails)
+    let emailSent = false;
+    try {
+      emailSent = await sendAuditReport(auditRequest, auditResult, reportId);
+    } catch (error) {
+      console.warn(`[AI-PROCESSOR] Email delivery failed (non-fatal):`, error);
+    }
 
-    // Mark as delivered
+    // Mark as completed regardless of email status
+    // Report is ready even if email failed
     await clientAny.auditRequest.update({
       where: { id: auditRequestId },
       data: {
         status: 'completed',
-        reportDelivered: true,
-        reportDeliveredAt: new Date(),
+        reportDelivered: emailSent,
+        reportDeliveredAt: emailSent ? new Date() : null,
       },
     });
 
-    console.log(`[AI-PROCESSOR] ✅ Audit completed and emailed for ${auditRequestId}`);
+    if (emailSent) {
+      console.log(`[AI-PROCESSOR] ✅ Audit completed and emailed for ${auditRequestId}`);
+    } else {
+      console.log(`[AI-PROCESSOR] ✅ Audit completed for ${auditRequestId} (email delivery failed - report available in database)`);
+    }
 
   } catch (error) {
     console.error(`[AI-PROCESSOR] ❌ Processing failed for ${auditRequestId}:`, error);
@@ -203,12 +213,13 @@ function generateMockReport(csvData: string): AuditResult {
 
 /**
  * Send audit report via email
+ * Returns true if email sent successfully, false otherwise
  */
 async function sendAuditReport(
   auditRequest: any,
   auditResult: AuditResult,
   reportId: string
-): Promise<void> {
+): Promise<boolean> {
   console.log(`[AI-PROCESSOR] Sending report to ${auditRequest.customerEmail}`);
 
   const emailHtml = generateReportEmailHtml(
@@ -226,8 +237,9 @@ async function sendAuditReport(
 
   if (!emailSent) {
     console.warn(`[AI-PROCESSOR] Email delivery failed for ${auditRequest.customerEmail}`);
-    throw new Error('Email delivery failed');
+    return false;
   }
 
   console.log(`[AI-PROCESSOR] ✅ Report emailed to ${auditRequest.customerEmail}`);
+  return true;
 }
