@@ -11,6 +11,21 @@ export async function GET(
     console.log('[API] ID type:', typeof id);
     console.log('[API] ID length:', id.length);
 
+    // Debug: Check database connection
+    const dbUrl = process.env.DATABASE_URL;
+    if (dbUrl) {
+      // Mask the password and show connection info
+      const urlParts = dbUrl.match(/postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+      if (urlParts) {
+        console.log('[API] DB Connection:', {
+          user: urlParts[1],
+          host: urlParts[3],
+          port: urlParts[4],
+          database: urlParts[5]
+        });
+      }
+    }
+
     // Debug: Check if prisma is defined
     console.log('[API] Prisma client defined:', !!prisma);
     console.log('[API] Prisma client type:', typeof prisma);
@@ -30,17 +45,27 @@ export async function GET(
     if (clientAny && typeof clientAny.auditRequest?.findUnique === 'function') {
       console.log('[API] Using auditRequest model');
 
-      // Additional debug: Count total records
+      // Additional debug: Count total records and show ALL IDs
       try {
         const totalCount = await clientAny.auditRequest.count();
         console.log('[API] Total audit requests in database:', totalCount);
 
-        // Try to find the first few records to see what IDs exist
-        const sampleRecords = await clientAny.auditRequest.findMany({
-          take: 5,
+        // Get ALL IDs to compare with the requested ID
+        const allRecords = await clientAny.auditRequest.findMany({
           select: { id: true, companyName: true, createdAt: true }
         });
-        console.log('[API] Sample records:', JSON.stringify(sampleRecords, null, 2));
+        console.log('[API] ALL record IDs in database:');
+        allRecords.forEach((r: any) => {
+          console.log(`  - ID: "${r.id}" (length: ${r.id.length}), Company: "${r.companyName}"`);
+          // Check if this ID matches the requested ID
+          if (r.id === id) {
+            console.log(`    ✅ EXACT MATCH FOUND for "${id}"`);
+          }
+        });
+
+        // Also try raw SQL to verify database connection
+        const rawResult = await clientAny.$queryRaw`SELECT id, "companyName" FROM "AuditRequest" WHERE id = ${id}`;
+        console.log('[API] Raw SQL query result:', rawResult);
       } catch (debugError) {
         console.error('[API] Debug query error:', debugError);
       }
