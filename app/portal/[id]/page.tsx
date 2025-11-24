@@ -54,88 +54,18 @@ function PortalPageContent() {
     }
   }, [id]);
 
-  // Handle payment success redirect - verify session and poll for webhook
+  // Handle payment success redirect - SIMPLE: Just trust Stripe and show upload
   useEffect(() => {
-    if (paymentStatus === 'success' && request && !paymentVerified) {
-      setProcessingPayment(true);
+    if (paymentStatus === 'success' && sessionId && !paymentVerified) {
+      console.log('✅ Payment success detected - showing upload form');
+      console.log(`   Payment status: ${paymentStatus}`);
+      console.log(`   Session ID: ${sessionId}`);
 
-      // Verify Stripe session if session_id provided
-      const verifySession = async () => {
-        if (sessionId) {
-          try {
-            const res = await fetch(`/api/audit/checkout?session_id=${sessionId}`);
-            const data = await res.json();
-            if (data.success && data.session?.payment_status === 'paid') {
-              console.log('✅ Payment verified with Stripe');
-              setPaymentVerified(true);
-            } else {
-              console.warn('⚠️  Session verification returned non-paid status:', data);
-            }
-          } catch (err) {
-            console.error('❌ Session verification failed:', err);
-          }
-        }
-      };
-
-      verifySession();
-
-      // Poll database for webhook completion
-      let pollCount = 0;
-      const maxPolls = 15; // 30 seconds (15 polls * 2 seconds)
-
-      const pollInterval = setInterval(async () => {
-        pollCount++;
-
-        try {
-          const res = await fetch(`/api/audit/portal/${id}`);
-
-          // If API call fails, check if we should timeout
-          if (!res.ok) {
-            console.warn(`⚠️  API call failed (${res.status}), poll ${pollCount}/${maxPolls}`);
-            if (pollCount >= maxPolls) {
-              console.log('⚠️  Webhook timeout - trusting payment URL parameters');
-              console.log(`⚠️  Payment status from URL: ${paymentStatus}, Session ID: ${sessionId}`);
-              setPaymentVerified(true);
-              setProcessingPayment(false);
-              clearInterval(pollInterval);
-            }
-            return; // Skip this poll and try again
-          }
-
-          const data = await res.json();
-
-          // Check if payment processed (status changed or paidAt set)
-          if (data.status !== 'pending' || data.paidAt) {
-            console.log('✅ Webhook processed, payment confirmed');
-            setRequest(data);
-            setPaymentVerified(true);
-            setProcessingPayment(false);
-            clearInterval(pollInterval);
-          } else if (pollCount >= maxPolls) {
-            // Timeout after 30 seconds - trust URL params and allow access
-            console.log('⚠️  Webhook timeout - trusting payment URL parameters');
-            console.log(`⚠️  Payment status from URL: ${paymentStatus}, Session ID: ${sessionId}`);
-            // Trust that payment was successful based on Stripe redirect
-            setPaymentVerified(true);
-            setProcessingPayment(false);
-            clearInterval(pollInterval);
-          }
-        } catch (err) {
-          console.error('Polling error:', err);
-          // On error, still check timeout
-          if (pollCount >= maxPolls) {
-            console.log('⚠️  Polling failed, but trusting payment success from URL');
-            setPaymentVerified(true);
-            setProcessingPayment(false);
-            clearInterval(pollInterval);
-          }
-        }
-      }, 2000);
-
-      // Cleanup on unmount
-      return () => clearInterval(pollInterval);
+      // Trust Stripe redirect - they paid, show the upload form
+      setPaymentVerified(true);
+      setProcessingPayment(false);
     }
-  }, [paymentStatus, request, id, sessionId, paymentVerified]);
+  }, [paymentStatus, sessionId, paymentVerified]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -200,12 +130,10 @@ function PortalPageContent() {
 
       setFile(null);
 
-      // Update request status to show processing
+      // Update request status to show processing (simple update, no new fields)
       setRequest({
         ...request,
         status: 'processing',
-        originalFileName: file.name,
-        fileUploadedAt: new Date().toISOString(),
       });
 
     } catch (err) {
@@ -237,31 +165,6 @@ function PortalPageContent() {
           <a href="/" className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
             Return Home
           </a>
-        </div>
-      </div>
-    );
-  }
-
-  // Show processing screen if payment successful but webhook still processing
-  if (processingPayment || (paymentStatus === 'success' && request.status === 'pending' && !paymentVerified)) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-900 to-blue-700">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center max-w-md">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-green-500 mx-auto mb-6"></div>
-          <h1 className="text-2xl font-bold text-green-600 mb-4">Payment Successful!</h1>
-          <p className="text-gray-700 mb-4">
-            Your payment has been processed successfully.
-          </p>
-          <p className="text-gray-600 text-sm">
-            We're setting up your audit portal... This usually takes just a few seconds.
-          </p>
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <span className="font-semibold">Request ID:</span>
-              <br />
-              <span className="font-mono text-xs">{request.id}</span>
-            </p>
-          </div>
         </div>
       </div>
     );
