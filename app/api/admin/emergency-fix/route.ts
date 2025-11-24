@@ -4,7 +4,7 @@
  * Uses Prisma (already installed) to fix email and resend report.
  * No additional dependencies needed.
  *
- * GET /api/admin/emergency-fix
+ * GET /api/admin/emergency-fix?id=xxx&email=yyy
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -15,8 +15,13 @@ export async function GET(req: NextRequest) {
   try {
     console.log('[EMERGENCY-FIX] Starting emergency email fix...');
 
-    const auditRequestId = 'cm1dd0h08mhml4t4ju4wsjlxp8';
-    const newEmail = 'connect@viddazzle.com';
+    // Get parameters from URL or use defaults
+    const { searchParams } = new URL(req.url);
+    const auditRequestId = searchParams.get('id') || 'cm1dd0h08mhml4t4ju4wsjlxp8';
+    const newEmail = searchParams.get('email') || 'connect@viddazzle.com';
+
+    console.log('[EMERGENCY-FIX] Audit ID:', auditRequestId);
+    console.log('[EMERGENCY-FIX] New email:', newEmail);
 
     // Step 1: Get current record
     const clientAny = prisma as unknown as Record<string, any>;
