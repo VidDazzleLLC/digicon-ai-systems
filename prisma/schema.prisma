@@ -477,6 +477,12 @@ model AuditRequest {
   rowCount Int?
   columns String? // JSON array as string
 
+  // File Upload Information
+  originalFileName String? // Original filename from user upload
+  fileUploadedAt DateTime? // When file was uploaded
+  fileSize Int? // File size in bytes
+  fileMimeType String? // e.g., "text/csv", "application/vnd.ms-excel"
+
   // Processing metadata
   processingStartedAt DateTime?
   processingCompletedAt DateTime?
