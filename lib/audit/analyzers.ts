@@ -44,8 +44,11 @@ function safeParseJSON<T = any>(input: string): T | null {
  * For environments without a configured API key we return a deterministic stub.
  */
 export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnalysisResult> {
-  // Minimal defensive behavior: if no API key, return a deterministic stub
-  if (!process.env.ANTHROPIC_API_KEY) {
+  // Validate API key format
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+
+  if (!apiKey) {
+    console.warn('[ANALYZERS] ⚠️  ANTHROPIC_API_KEY not set - returning stub data');
     return {
       systemType: 'Payroll Processing',
       kpiMetrics: {
@@ -58,7 +61,21 @@ export async function analyzePayrollWithClaude(data: any[]): Promise<SystemAnaly
     };
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  if (!apiKey.startsWith('sk-ant-')) {
+    console.error('[ANALYZERS] ⚠️  ANTHROPIC_API_KEY has invalid format (should start with sk-ant-)');
+    return {
+      systemType: 'Payroll Processing',
+      kpiMetrics: {
+        wasteReduction: '0%',
+        efficiencyGain: '0%',
+        speedImprovement: 'N/A',
+      },
+      findings: ['ERROR: Invalid ANTHROPIC_API_KEY format'],
+      confidence: 0,
+    };
+  }
+
+  const client = new Anthropic({ apiKey });
 
   // Build a simple prompt (kept minimal and quoted)
   const prompt = [

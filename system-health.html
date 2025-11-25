@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Diagnostics</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        h2 { color: #555; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        button {
+            background-color: #0066cc;
+            color: white;
+            padding: 15px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        button:hover { background-color: #0052a3; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        .status-ok { color: #28a745; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+        .card {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .card-error { border-left: 4px solid #dc3545; }
+        .card-ok { border-left: 4px solid #28a745; }
+        .card-warning { border-left: 4px solid #ffc107; }
+        pre {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .issue-list {
+            list-style: none;
+            padding: 0;
+        }
+        .issue-list li {
+            padding: 8px;
+            margin: 5px 0;
+            background: #fff3cd;
+            border-left: 3px solid #ffc107;
+            border-radius: 3px;
+        }
+        .issue-list li.critical {
+            background: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+            font-size: 20px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .timestamp {
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 System Health Diagnostics</h1>
+        <p>Comprehensive check of all critical systems and services.</p>
+
+        <button id="checkBtn" onclick="runDiagnostics()">
+            🚀 Run Full Diagnostics
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://digicon-ai-systems-production.up.railway.app/api/admin/system-health';
+
+        async function runDiagnostics() {
+            const btn = document.getElementById('checkBtn');
+            const resultDiv = document.getElementById('result');
+
+            btn.disabled = true;
+            btn.innerHTML = '⏳ Running diagnostics<span class="loading">⟳</span>';
+
+            resultDiv.innerHTML = '<p>Please wait while we check all systems...</p>';
+
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    throw new Error(data.error || 'Request failed');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="card card-error">
+                        <strong>❌ ERROR:</strong><br>
+                        ${error.message}<br><br>
+                        <p>Check Railway logs or network connectivity.</p>
+                    </div>
+                `;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '🚀 Run Full Diagnostics';
+            }
+        }
+
+        function displayResults(data) {
+            const resultDiv = document.getElementById('result');
+
+            let html = `
+                <p class="timestamp">Last checked: ${new Date(data.timestamp).toLocaleString()}</p>
+
+                <h2>🚨 Critical Issues</h2>
+                ${data.summary.criticalIssues.length === 0
+                    ? '<div class="card card-ok">✅ No critical issues detected</div>'
+                    : `<ul class="issue-list">${data.summary.criticalIssues.map(issue =>
+                        `<li class="critical">❌ ${issue}</li>`
+                    ).join('')}</ul>`}
+
+                <h2>⚠️ Warnings</h2>
+                ${data.summary.warnings.length === 0
+                    ? '<div class="card card-ok">✅ No warnings</div>'
+                    : `<ul class="issue-list">${data.summary.warnings.map(warning =>
+                        `<li>⚠️ ${warning}</li>`
+                    ).join('')}</ul>`}
+
+                <h2>🔑 Environment Configuration</h2>
+                <div class="card">
+                    <table>
+                        <tr>
+                            <td><strong>Node Environment:</strong></td>
+                            <td>${data.environment.nodeEnv || 'not set'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Anthropic API Key:</strong></td>
+                            <td>${data.environment.hasAnthropicKey ? '✅ Set' : '❌ Not set'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Resend API Key:</strong></td>
+                            <td>${data.environment.hasResendKey ? '✅ Set' : '❌ Not set'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email From Address:</strong></td>
+                            <td>${data.environment.hasEmailFrom ? '✅ ' + data.environment.emailFrom : '❌ Not set'}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Database URL:</strong></td>
+                            <td>${data.environment.hasDatabaseUrl ? '✅ Set' : '❌ Not set'}</td>
+                        </tr>
+                    </table>
+                </div>
+
+                <h2>🤖 Anthropic API</h2>
+                <div class="card ${data.services.anthropic.status === 'ok' ? 'card-ok' : 'card-error'}">
+                    <strong>Status:</strong> <span class="status-${data.services.anthropic.status}">${data.services.anthropic.status.toUpperCase()}</span><br>
+                    ${data.services.anthropic.authenticated
+                        ? `✅ Authenticated successfully<br>Key: ${data.services.anthropic.keyPrefix}`
+                        : `❌ ${data.services.anthropic.error || 'Not authenticated'}`}
+                    ${data.services.anthropic.errorType ? `<br><strong>Error Type:</strong> ${data.services.anthropic.errorType}` : ''}
+                    ${data.services.anthropic.statusCode ? `<br><strong>Status Code:</strong> ${data.services.anthropic.statusCode}` : ''}
+                </div>
+
+                <h2>📧 Resend Email Service</h2>
+                <div class="card ${data.services.resend.status === 'ok' ? 'card-ok' : 'card-error'}">
+                    <strong>Status:</strong> <span class="status-${data.services.resend.status}">${data.services.resend.status.toUpperCase()}</span><br>
+                    ${data.services.resend.configured
+                        ? `✅ API key configured<br>Key: ${data.services.resend.keyPrefix}<br><em>${data.services.resend.note || ''}</em>`
+                        : `❌ ${data.services.resend.error}`}
+                </div>
+
+                <h2>💾 Database Connection</h2>
+                <div class="card ${data.services.database.status === 'ok' ? 'card-ok' : 'card-error'}">
+                    <strong>Status:</strong> <span class="status-${data.services.database.status}">${data.services.database.status.toUpperCase()}</span><br>
+                    ${data.services.database.connected
+                        ? `✅ Connected successfully<br>Total audit requests in database: ${data.services.database.totalAuditRequests}`
+                        : `❌ ${data.services.database.error}`}
+                </div>
+
+                <h2>💰 Paid Requests Without Reports</h2>
+                ${renderPaidWithoutReports(data.paidWithoutReports)}
+
+                <h2>📊 Recent Audit Requests (Last 15)</h2>
+                ${renderRecentRequests(data.recentRequests)}
+
+                <h2>🔍 Raw Data</h2>
+                <details>
+                    <summary><strong>Click to view full diagnostic data</strong></summary>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                </details>
+            `;
+
+            resultDiv.innerHTML = html;
+        }
+
+        function renderPaidWithoutReports(data) {
+            if (data.status === 'error') {
+                return `<div class="card card-error">❌ ${data.error}</div>`;
+            }
+
+            if (data.totalPaidWithoutReports === 0) {
+                return '<div class="card card-ok">✅ All paid customers have received their reports!</div>';
+            }
+
+            return `
+                <div class="card card-warning">
+                    <strong>⚠️ ${data.totalPaidWithoutReports} paid customers without reports</strong><br>
+                    - Missing CSV data: ${data.missingCsvData}<br>
+                    - Has CSV but no report: ${data.hasCsvDataButNoReport}
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Email</th>
+                            <th>Company</th>
+                            <th>Paid At</th>
+                            <th>Has CSV</th>
+                            <th>Issue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.requests.map(r => `
+                            <tr>
+                                <td style="font-family: monospace; font-size: 11px;">${r.id.substring(0, 20)}...</td>
+                                <td>${r.customerEmail || 'N/A'}</td>
+                                <td>${r.companyName || 'N/A'}</td>
+                                <td>${r.paidAt ? new Date(r.paidAt).toLocaleDateString() : 'N/A'}</td>
+                                <td>${r.hasCsvData ? '✅' : '❌'}</td>
+                                <td>${r.issue}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function renderRecentRequests(data) {
+            if (data.status === 'error') {
+                return `<div class="card card-error">❌ ${data.error}</div>`;
+            }
+
+            return `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Created</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Has CSV</th>
+                            <th>Has Report</th>
+                            <th>Delivered</th>
+                            <th>Issue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.requests.map(r => {
+                            const issueClass = r.diagnostics.issue === 'OK' ? '' :
+                                             r.diagnostics.issue === 'NO_CSV_DATA' ? 'style="background-color: #fff3cd;"' :
+                                             'style="background-color: #f8d7da;"';
+                            return `
+                                <tr ${issueClass}>
+                                    <td>${new Date(r.createdAt).toLocaleDateString()}</td>
+                                    <td>${r.customerEmail || 'N/A'}</td>
+                                    <td>${r.status}</td>
+                                    <td>${r.diagnostics.hasCsvData ? '✅' : '❌'}</td>
+                                    <td>${r.diagnostics.hasReport ? '✅' : '❌'}</td>
+                                    <td>${r.reportDelivered ? '✅' : '❌'}</td>
+                                    <td>${r.diagnostics.issue}</td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Auto-run on page load
+        window.addEventListener('load', runDiagnostics);
+    </script>
+</body>
+</html>
