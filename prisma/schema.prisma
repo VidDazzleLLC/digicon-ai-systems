@@ -248,7 +248,7 @@ model PayrollCorrection {
   employeeId      String?
   
   // AI Processing
-  aiModel         String   @default("claude-3-5-sonnet-20240620")
+  aiModel         String   @default("claude-3-5-sonnet-20241022")
   aiRequestId     String?
   aiTokensUsed    Int?
   processingTime  Int?     // Milliseconds

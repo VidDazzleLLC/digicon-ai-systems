@@ -20,7 +20,7 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const MODEL = 'claude-3-5-sonnet-20240620';
+const MODEL = 'claude-3-5-sonnet-20241022';
 const MAX_TOKENS = 4096;
 
 /**
