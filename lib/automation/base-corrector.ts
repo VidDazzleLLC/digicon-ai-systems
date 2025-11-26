@@ -5,9 +5,25 @@
 
 import Anthropic from '@anthropic-ai/sdk';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+/**
+ * Get Anthropic client with validated API key
+ * Returns null if API key is not configured or invalid
+ */
+function getAnthropicClient(): Anthropic | null {
+  const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+
+  if (!apiKey) {
+    console.error('[BASE-CORRECTOR] ⚠️  ANTHROPIC_API_KEY not set in environment');
+    return null;
+  }
+
+  if (!apiKey.startsWith('sk-ant-')) {
+    console.error('[BASE-CORRECTOR] ⚠️  ANTHROPIC_API_KEY has invalid format (should start with sk-ant-)');
+    return null;
+  }
+
+  return new Anthropic({ apiKey });
+}
 
 export type SystemType = 'payroll' | 'hris' | 'erp' | 'crm' | 'compliance' | 'ai_infrastructure';
 
@@ -103,8 +119,25 @@ export async function analyzeCorrection(
   recordId: string
 ): Promise<CorrectionResult> {
   try {
+    const anthropic = getAnthropicClient();
+
+    if (!anthropic) {
+      console.error('[BASE-CORRECTOR] Cannot analyze - Anthropic API key not configured');
+      return {
+        success: false,
+        issuesFound: [],
+        aiReasoning: 'Anthropic API key not configured or invalid',
+        confidence: 0,
+        correctedData: data,
+        corrections: [],
+        severity: 'low',
+        category: 'configuration_error',
+        error: 'ANTHROPIC_API_KEY not configured or invalid format'
+      };
+    }
+
     const systemPrompt = SYSTEM_PROMPTS[systemType];
-    
+
     const message = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-20240620',
       max_tokens: 4096,
