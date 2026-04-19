@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
+    "build:electron": "electron-builder --config electron-builder.json",
+    "dist": "npm run build && npm run build:electron",
+    "electron": "electron electron/main.js",
     "lint": "next lint",
     "start": "prisma generate && prisma migrate deploy && next start --port $PORT",
     "prisma:generate": "prisma generate",
@@ -20,9 +23,13 @@
     "@prisma/client": "^6.19.0",
     "@supabase/supabase-js": "^2.45.0",
     "@types/nodemailer": "^7.0.4",
+    "axios": "^1.15.0",
     "bcryptjs": "^2.4.3",
     "framer-motion": "^11.0.0",
+    "jsonwebtoken": "^9.0.3",
     "next": "14.2.5",
+    "node-cron": "^4.2.1",
+    "node-machine-id": "^1.1.12",
     "nodemailer": "^7.0.10",
     "openai": "^4.70.0",
     "papaparse": "^5.4.1",
@@ -32,9 +39,11 @@
     "resend": "2.0.0",
     "stripe": "^19.3.1",
     "swr": "^2.3.6",
+    "systeminformation": "^5.31.5",
     "together-ai": "^0.6.0",
     "twilio": "^5.3.4",
     "vm2": "^3.10.0",
+    "winston": "^3.19.0",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
@@ -44,9 +53,13 @@
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "autoprefixer": "^10.4.0",
+    "concurrently": "^9.2.1",
+    "electron": "^41.2.1",
+    "electron-builder": "^26.8.1",
     "postcss": "^8.4.0",
     "prisma": "^6.19.0",
     "tailwindcss": "^3.4.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "wait-on": "^9.0.5"
   }
 }
