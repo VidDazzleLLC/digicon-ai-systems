@@ -1,6 +1,7 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, globalShortcut } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, globalShortcut, Notification } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const { autoUpdater } = require('electron-updater');
 const http = require('http');
 const fs = require('fs');
 
@@ -97,6 +98,10 @@ function startNextJs() {
     console.error(`Next.js stderr: ${data}`);
   });
 
+  nextServer.on('error', (err) => {
+    console.error(`Failed to start Next.js process: ${err.message}`);
+  });
+
   nextServer.on('close', (code) => {
       console.log(`Next.js process exited with code ${code}`);
       if (code !== 0 && code !== null && selfHealingAgent) {
@@ -126,6 +131,16 @@ function checkServer(url, callback) {
 }
 
 app.on('ready', () => {
+  // 1. Auto-Launch Configuration
+  app.setLoginItemSettings({
+    openAtLogin: true,
+    openAsHidden: true, // Start in background tray
+    path: app.getPath('exe')
+  });
+
+  // 2. Setup Auto Updater
+  autoUpdater.checkForUpdatesAndNotify();
+
   startNextJs();
   createWindow();
 
@@ -145,11 +160,32 @@ app.on('ready', () => {
   });
 
   // Initialize background generic modules
-  require('./license.js')(ipcMain);
+  const licenseModule = require('./license.js');
+  licenseModule(ipcMain);
   require('./reporting.js')(ipcMain);
+
+  // 4. Periodic License Verification
+  setInterval(async () => {
+     try {
+         const res = await ipcMain.handlers['license-check']();
+         if (!res.valid) {
+             console.error('Periodic License Check Failed. Disabling core functions.');
+             // Disable UI or shutdown the Next server
+             if (nextServer) nextServer.kill();
+             if (mainWindow) mainWindow.loadFile(path.join(__dirname, 'license-error.html'));
+         }
+     } catch (e) {}
+  }, 1000 * 60 * 60); // Verify every hour
 
   // Start autonomous features
   try {
+      // 3. Expose Native Notifications to Agents
+      global.sendNotification = (title, body) => {
+          if (Notification.isSupported()) {
+              new Notification({ title, body }).show();
+          }
+      };
+
       selfHealingAgent = require('../lib/agent-core/self-healing.js');
       global.mainWindow = mainWindow;
       require('../lib/agent-core/self-improving.js');

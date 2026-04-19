@@ -1,6 +1,7 @@
 {
   "appId": "com.digicon.ai.systems",
   "productName": "Digicon AI Systems",
+  "artifactName": "Digicon_v1.0.zip",
   "copyright": "Copyright © 2025 Digicon",
   "directories": {
     "output": "dist"
@@ -33,6 +34,7 @@
     ],
     "icon": "public/favicon.ico"
   },
+  "asar": false,
   "mac": {
     "target": [
       "dmg",
@@ -40,6 +42,11 @@
     ],
     "icon": "public/favicon.ico",
     "category": "public.app-category.productivity"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "VidDazzleLLC",
+    "repo": "digicon-ai-systems"
   },
   "nsis": {
     "oneClick": true,
