@@ -19,7 +19,7 @@ function createWindow() {
       nodeIntegration: true,
       contextIsolation: false, // Standard for this basic integration
     },
-    title: 'Digicon AI Systems',
+    title: 'Digicon',
   });
 
   checkServer('http://localhost:3000', () => {
@@ -61,7 +61,7 @@ function createTray() {
   ]);
 
   if(tray) {
-      tray.setToolTip('Digicon AI Systems Agent');
+      tray.setToolTip('Digicon Agent');
       tray.setContextMenu(contextMenu);
       tray.on('click', () => {
           mainWindow.show();
