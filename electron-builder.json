@@ -1,0 +1,61 @@
+{
+  "appId": "com.digicon.app",
+  "productName": "Digicon",
+  "artifactName": "Digicon_v1.0.zip",
+  "copyright": "Copyright © 2025 Digicon",
+  "directories": {
+    "output": "dist"
+  },
+  "files": [
+    "electron/**/*",
+    ".next/standalone/**/*",
+    ".next/static/**/*",
+    "public/**/*",
+    "package.json",
+    "lib/agent-core/**/*"
+  ],
+  "extraMetadata": {
+    "main": "electron/main.js"
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": [
+          "x64"
+        ]
+      },
+      {
+        "target": "zip",
+        "arch": [
+          "x64"
+        ]
+      }
+    ],
+    "icon": "public/favicon.ico"
+  },
+  "asar": false,
+  "mac": {
+    "target": [
+      "dmg",
+      "zip"
+    ],
+    "icon": "public/favicon.ico",
+    "category": "public.app-category.productivity"
+  },
+  "publish": {
+    "provider": "github",
+    "owner": "VidDazzleLLC",
+    "repo": "digicon-ai-systems"
+  },
+  "nsis": {
+    "oneClick": true,
+    "perMachine": false,
+    "allowElevation": true,
+    "allowToChangeInstallationDirectory": false,
+    "createDesktopShortcut": true,
+    "createStartMenuShortcut": true,
+    "shortcutName": "Digicon",
+    "runAfterFinish": true
+  }
+}

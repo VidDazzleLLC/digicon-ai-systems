@@ -12,6 +12,7 @@ const nextConfig = {
     },
   },
 
+  output: 'standalone',
   // API route configuration for longer timeouts (Railway default is 10s)
   // Webhooks and AI processing need more time
   api: {
